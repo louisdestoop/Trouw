@@ -154,7 +154,40 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .del:hover{color:var(--warn);background:var(--warn-soft)}
 .del.armed{color:var(--on-accent);background:var(--warn)}
 
-/* Overzicht */
+/* Overzicht (leesweergave) */
+.ov-days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.ov-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ov-card h3{margin:0;font-family:var(--display);font-weight:400;font-size:20px;color:var(--plum)}
+.ov-main{border-top:3px solid var(--rasp);gap:14px}
+.ov-main .ov-h .eyebrow{margin:0 0 2px}
+.ov-main h3{font-size:26px}
+.ov-sub{margin:4px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ov-sub span,.gside h4 span{font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums}
+.ov-title{margin:8px 0 -4px;font-family:var(--display);font-weight:400;font-size:24px;color:var(--plum)}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
+.facts{margin:0;display:flex;flex-direction:column}
+.facts div{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:10px;padding:6px 0;border-top:1px dotted var(--line)}
+.facts div:first-child{border-top:none;padding-top:0}
+.facts dt{font-size:13px;color:var(--muted);font-weight:600}
+.facts dd{margin:0;font-size:14px;overflow-wrap:anywhere}
+.schedule{list-style:none;margin:0;padding:0 0 0 2px;display:flex;flex-direction:column}
+.schedule li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:14px;position:relative;padding:0 0 12px}
+.schedule li:last-child{padding-bottom:0}
+.schedule li::before{content:"";position:absolute;left:73px;top:9px;width:9px;height:9px;border-radius:50%;background:var(--rasp)}
+.schedule li:not(:last-child)::after{content:"";position:absolute;left:77px;top:20px;bottom:-2px;width:1px;background:var(--blush)}
+.sch-time{font-family:var(--display);font-size:20px;line-height:1.2;color:var(--plum);text-align:right;font-variant-numeric:tabular-nums}
+.sch-what{display:flex;flex-direction:column;padding-left:20px;line-height:1.3}
+.sch-what b{font-weight:600}
+.sch-what small{font-size:12.5px;color:var(--muted)}
+.gsides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.gside h4{margin:0 0 4px;font-size:13px;color:var(--rasp);font-weight:600}
+.gside ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.panel-head .meta a{color:var(--rasp);font-weight:600}
+.task.check-row textarea.title{resize:none;overflow:hidden;line-height:1.4}
+.swatch{white-space:nowrap}
+.gside li.opt{color:var(--muted);font-style:italic}
+@media (max-width:760px){ .ov-days{grid-template-columns:1fr} .gsides{grid-template-columns:1fr 1fr} }
+/* Overzicht (aanpassen) */
 .info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
 .info-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .info-card h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:20px;color:var(--plum)}
@@ -188,6 +221,17 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
   .task .confirm{grid-area:auto;grid-column:1 / -1}
 }
 
+/* Te checken */
+.checks{background:var(--gold-soft);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.checks h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.checks h3 span{font-weight:500;margin-left:4px}
+.task.check-row{grid-template-columns:26px minmax(0,1fr) auto}
+.add-inline{display:flex;gap:8px}
+.add-inline input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.confirm .ov-fields{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.confirm .ov-fields label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
+.confirm .ov-fields input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-weight:400;font-size:14px;color:var(--ink)}
+@media (max-width:720px){ .task.check-row{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:none} .task.check-row>*{grid-area:auto!important} .confirm .ov-fields{grid-template-columns:1fr} }
 /* Tafels */
 .unplaced{border:1px dashed var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .unplaced h3,.table-card h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -428,7 +472,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const currentTab = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : "overzicht"; };
   const gname = g => [g.voornaam, g.achternaam].filter(Boolean).join(" ") || "Naamloos";
   const sum = (arr, f) => arr.reduce((a, x) => a + (Number(f(x)) || 0), 0);
-  const isCounted = g => !g.optioneel && g.status !== "nee";
+  // Een +1 is enkel "optioneel" zolang hij niet bevestigd is; komt hij, dan is het een gewone gast.
+  const isOpt = g => !!g.optioneel && g.status !== "ja";
+  const isCounted = g => !isOpt(g) && g.status !== "nee";
 
   function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3600); }
   function showNotice(msg){ const n = document.getElementById("notice"); n.textContent = msg; n.hidden = !msg; }
@@ -464,8 +510,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("days-sub").textContent = d > 1 ? "dagen tot de grote dag" : d === 1 ? "dag tot de grote dag" : d === 0 ? "" : "getrouwd";
 
     const counted = S.guests.filter(isCounted);
-    const yes = S.guests.filter(g => g.status === "ja" && !g.optioneel).length;
-    const opt = S.guests.filter(g => g.optioneel && g.status !== "nee").length;
+    const yes = S.guests.filter(g => g.status === "ja").length;
+    const opt = S.guests.filter(g => isOpt(g) && g.status !== "nee").length;
     const no = S.guests.filter(g => g.status === "nee").length;
     document.getElementById("s-guests").innerHTML = `${yes} <small>van ${counted.length}</small>`;
     document.getElementById("s-guests-foot").textContent = `${opt} optionele +1 · ${no} afgezegd`;
@@ -477,15 +523,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
     setBar("s-budget-bar", est ? fixed/est*100 : 0);
 
-    const done = S.tasks.filter(t => t.done).length;
-    const late = S.tasks.filter(t => !t.done && t.deadline && daysUntil(t.deadline) < 0).length;
-    document.getElementById("s-tasks").innerHTML = `${done} <small>van ${S.tasks.length}</small>`;
+    const realTasks = S.tasks.filter(t => t.categorie !== CAT_CHECK);
+    const done = realTasks.filter(t => t.done).length;
+    const late = realTasks.filter(t => !t.done && t.deadline && daysUntil(t.deadline) < 0).length;
+    document.getElementById("s-tasks").innerHTML = `${done} <small>van ${realTasks.length}</small>`;
     document.getElementById("s-tasks-foot").innerHTML = late ? `<b>${late} over de uiterste datum</b>` : "Alles op schema";
-    setBar("s-tasks-bar", S.tasks.length ? done/S.tasks.length*100 : 0);
+    setBar("s-tasks-bar", realTasks.length ? done/realTasks.length*100 : 0);
 
     document.getElementById("n-gasten").textContent = S.guests.length || "";
     document.getElementById("n-budget").textContent = S.budget.length || "";
-    document.getElementById("n-taken").textContent = (S.tasks.length - done) || "";
+    document.getElementById("n-taken").textContent = S.tasks.filter(t => !t.done).length || "";
     document.getElementById("n-tafels").textContent = S.tables.length || "";
     document.getElementById("n-uitn").textContent = S.households.filter(h => !h.rsvp_op).length || "";
     document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === currentTab() ? "page" : "false"));
@@ -495,7 +542,83 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const attrs = (col, id, f, extra) => `data-col="${col}" data-id="${esc(id)}" data-f="${f}"${extra ? " " + extra : ""}${dis()}`;
 
   // ---------- overzicht ----------
+  // Leesweergave: eerst de burgerlijke trouw, dan het trouwfeest met dagschema, dan alles wat vaststaat.
+  // "Vastgelegd" komt uit het tabblad Info én uit afgevinkte taken met een overzichtslabel (kolommen overzicht / overzicht_info).
+  const OV = { edit:false };
+  const SEC_BURG = "Burgerlijke trouw · 3 juli", SEC_FEEST = "Trouwfeest · 10 juli", CAT_CHECK = "Te checken";
+  const CARD_ORDER = ["Ceremonie","Getuigen","Catering","Muziek","Foto & Video","Kleding & Make-Up","Bloemen & Deco","Vervoer","Uitnodigingen","Administratie","Locatie","Dag zelf","Familie","Huisstijl"];
+  const isTimeVal = v => /^\s*\d{1,2}u\d{0,2}\b/.test(String(v || ""));
+  const infoSorted = list => [...list].sort((a,b) => (Number(a.volgorde)||Number(a.created)||0) - (Number(b.volgorde)||Number(b.created)||0));
+  const doneForOverview = () => S.tasks.filter(t => t.done && String(t.overzicht || "").trim() && t.categorie !== CAT_CHECK);
+  const taskFact = t => ({ label: String(t.overzicht).trim(), value: String(t.overzicht_info || "").trim() || String(t.leverancier || "").trim() || "geregeld" });
+  function swatchesOf(v){
+    const hs = String(v || "").match(/#[0-9a-f]{6}/ig);
+    return hs ? `<div class="swatches">${hs.map(h => `<span class="swatch"><i style="background:${h}"></i>${h}</span>`).join("")}</div>` : "";
+  }
+  function factList(facts){
+    if(!facts.length) return "";
+    return `<dl class="facts">${facts.map(f => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}${swatchesOf(f.value)}</dd></div>`).join("")}</dl>`;
+  }
+  function scheduleHtml(items){
+    if(!items.length) return "";
+    return `<ol class="schedule">${items.map(i => {
+      const m = /^\s*(\d{1,2}u\d{0,2})\s*(?:[–-]\s*(\d{1,2}u\d{0,2}))?\s*(.*)$/.exec(i.waarde);
+      return `<li><span class="sch-time">${esc(m ? m[1] : i.waarde)}</span><span class="sch-what"><b>${esc(i.label)}</b>${m && m[2] ? `<small>tot ${esc(m[2])}</small>` : ""}${m && m[3] ? `<small>${esc(m[3])}</small>` : ""}</span></li>`;
+    }).join("")}</ol>`;
+  }
   function viewInfo(){
+    if(OV.edit) return viewInfoEdit();
+    const groups = {};
+    S.info.forEach(i => { (groups[i.sectie] = groups[i.sectie] || []).push(i); });
+    const tasksBy = {};
+    doneForOverview().forEach(t => { (tasksBy[t.categorie || "Overige"] = tasksBy[t.categorie || "Overige"] || []).push(t); });
+    const split = sec => { const items = infoSorted(groups[sec] || []); return { times: items.filter(i => isTimeVal(i.waarde)), facts: items.filter(i => !isTimeVal(i.waarde)).map(i => ({ label: i.label, value: i.waarde })) }; };
+
+    // Burgerlijke trouw
+    const burg = split(SEC_BURG);
+    const burgFacts = burg.facts.concat((tasksBy["Burgerlijke trouw"] || []).map(taskFact));
+    const bg = S.guests.filter(g => g.burgerlijk && g.status !== "nee" && !isCouple(g)).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const side = (via, title) => { const l = bg.filter(g => (g.via || "louis") === via); return l.length ? `<div class="gside"><h4>${title} <span>${l.length}</span></h4><ul>${l.map(g => `<li${isOpt(g) ? ' class="opt"' : ""}>${esc(gname(g))}</li>`).join("")}</ul></div>` : ""; };
+    const burgCard = `<section class="ov-card ov-main">
+        <div class="ov-h"><p class="eyebrow">Zaterdag 3 juli 2027</p><h3>Burgerlijke trouw</h3></div>
+        ${scheduleHtml(burg.times)}${factList(burgFacts)}
+        <div class="ov-guests"><h4 class="ov-sub">Gasten <span>${bg.length}</span></h4>
+          ${bg.length ? `<div class="gsides">${side("florence", "Kant Florence")}${side("louis", "Kant Louis")}</div>` : `<p class="meta">Nog niemand aangeduid. Vink "Burg." aan bij Gasten.</p>`}</div>
+      </section>`;
+
+    // Trouwfeest
+    const feest = split(SEC_FEEST);
+    const feestCard = `<section class="ov-card ov-main">
+        <div class="ov-h"><p class="eyebrow">Zaterdag 10 juli 2027</p><h3>Trouwfeest</h3></div>
+        ${factList(feest.facts)}
+        ${feest.times.length ? `<h4 class="ov-sub">Dagschema</h4>${scheduleHtml(feest.times)}` : ""}
+      </section>`;
+
+    // Vastgelegd: info-onderdelen en afgevinkte taken, per onderdeel samengevoegd
+    const cards = {};
+    Object.keys(groups).filter(n => n !== SEC_BURG && n !== SEC_FEEST && n !== "Na te kijken").forEach(n => {
+      cards[n] = (cards[n] || []).concat(infoSorted(groups[n]).map(i => ({ label: i.label, value: i.waarde })));
+    });
+    Object.keys(tasksBy).filter(n => n !== "Burgerlijke trouw").forEach(n => { cards[n] = (cards[n] || []).concat(tasksBy[n].map(taskFact)); });
+    const st = S.settings, inv = [];
+    if(st.rsvp_deadline) inv.push({ label: "Antwoorden vóór", value: fmtMonth(st.rsvp_deadline) });
+    if(st.rsvp_dresscode) inv.push({ label: "Dresscode", value: st.rsvp_dresscode });
+    if(st.site_url) inv.push({ label: "Webadres", value: st.site_url });
+    if(invitesLocked()) inv.push({ label: "Verstuurd", value: fmtStamp(st.uitnodigingen_verstuurd) });
+    if(inv.length) cards["Uitnodigingen"] = inv.concat(cards["Uitnodigingen"] || []);
+    const names = Object.keys(cards).filter(n => cards[n].length).sort((a,b) => {
+      const ia = CARD_ORDER.indexOf(a), ib = CARD_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, "nl");
+    });
+    const fixed = names.map(n => `<section class="ov-card"><h3>${esc(n)}</h3>${factList(cards[n])}</section>`).join("");
+    const openChecks = S.tasks.filter(t => t.categorie === CAT_CHECK && !t.done).length;
+    return `
+      <div class="panel-head"><h2>Overzicht</h2><span class="meta">${openChecks ? `<a href="#taken">${openChecks} ${openChecks === 1 ? "punt" : "punten"} te checken</a> · ` : ""}<button class="linkbtn" data-ov-edit type="button">Aanpassen</button></span></div>
+      <div class="ov-days">${burgCard}${feestCard}</div>
+      <h3 class="ov-title">Vastgelegd</h3>
+      ${fixed ? `<div class="ov-grid">${fixed}</div>` : `<div class="empty">Nog niets vastgelegd. Vink taken af bij Taken.</div>`}`;
+  }
+  function viewInfoEdit(){
     const groups = {};
     S.info.forEach(i => { (groups[i.sectie] = groups[i.sectie] || []).push(i); });
     const names = Object.keys(groups).sort((a,b) => {
@@ -508,9 +631,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div><textarea class="cell auto" rows="1" ${attrs("info", i.id, "waarde", 'aria-label="' + esc(i.label) + '"')}>${esc(i.waarde)}</textarea>${sw}</div>
         ${delBtn("info", i.id)}</div>`;
     }).join("");
-    const cards = names.map(n => `<section class="info-card${n === "Na te kijken" ? " check" : ""}"><h3>${esc(n)}</h3>${rows(n)}</section>`).join("");
+    const cards = names.map(n => `<section class="info-card"><h3>${esc(n)}</h3>${rows(n)}</section>`).join("");
     return `
-      <div class="panel-head"><h2>Overzicht</h2><span class="meta">Alles wat al geregeld of afgesproken is. Klik op een tekst om hem aan te passen.</span></div>
+      <div class="panel-head"><h2>Overzicht aanpassen</h2><span class="meta"><button class="btn" data-ov-done type="button">Klaar</button></span></div>
       ${names.length ? `<div class="info">${cards}</div>` : `<div class="empty">Nog geen informatie. Voeg hierboven een eerste item toe.</div>`}
       <form class="add" data-add="info">
         <label>Onderdeel<input id="i-sectie" name="sectie" list="i-secties" required placeholder="bv. Leveranciers"${dis()}></label>
@@ -527,7 +650,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
     const list = [...S.guests].sort((a,b) => (a.nr||9999) - (b.nr||9999) || (a.created||0)-(b.created||0)).filter(g =>
       (F.via === "alle" || g.via === F.via) &&
-      (F.status === "alle" || (F.status === "opt" ? g.optioneel : (g.status||"open") === F.status)) &&
+      (F.status === "alle" || (F.status === "opt" ? isOpt(g) : (g.status||"open") === F.status)) &&
       (!F.burg || g.burgerlijk) &&
       (!q || gname(g).toLowerCase().includes(q) || (g.relatie||"").toLowerCase().includes(q)));
     if(!list.length) return `<div class="empty">${S.guests.length ? "Geen gasten die aan deze filter voldoen." : "Nog geen gasten. Voeg hierboven de eerste toe."}</div>`;
@@ -537,7 +660,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       return `<tr class="${st==="nee"?"declined":""}">
         <td class="nr">${esc(g.nr || "")}</td>
         <td><input class="cell" ${attrs("guests", g.id, "voornaam", 'aria-label="Voornaam"')} value="${esc(g.voornaam)}"></td>
-        <td><input class="cell" ${attrs("guests", g.id, "achternaam", 'aria-label="Achternaam"')} value="${esc(g.achternaam)}">${g.optioneel ? `<span class="tag opt">optioneel</span>` : ""}</td>
+        <td><input class="cell" ${attrs("guests", g.id, "achternaam", 'aria-label="Achternaam"')} value="${esc(g.achternaam)}">${isOpt(g) ? `<span class="tag opt">optioneel</span>` : ""}</td>
         <td><select class="cell via" ${attrs("guests", g.id, "via", 'aria-label="Via"')}><option value="louis"${g.via==="louis"?" selected":""}>L</option><option value="florence"${g.via==="florence"?" selected":""}>${esc(partnerLabel()[0])}</option></select></td>
         <td><select class="cell" ${attrs("guests", g.id, "relatie", 'aria-label="Relatie"')}>${RELATIES.map(r => `<option${g.relatie===r?" selected":""}>${r}</option>`).join("")}</select></td>
         <td class="c"><input type="checkbox" ${attrs("guests", g.id, "kind", 'data-t="bool" aria-label="Kind (geen diner)"')}${g.kind ? " checked" : ""}></td>
@@ -556,7 +679,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   function viewGuests(){
     const g = S.guests, alive = g.filter(x => x.status !== "nee");
-    const c = { alle: g.length, ja: g.filter(x=>x.status==="ja").length, open: g.filter(x=>(x.status||"open")==="open").length, nee: g.filter(x=>x.status==="nee").length, opt: g.filter(x=>x.optioneel).length };
+    const c = { alle: g.length, ja: g.filter(x=>x.status==="ja").length, open: g.filter(x=>(x.status||"open")==="open").length, nee: g.filter(x=>x.status==="nee").length, opt: g.filter(isOpt).length };
     const via = { louis: g.filter(x=>x.via==="louis").length, florence: g.filter(x=>x.via==="florence").length };
     const hg = h => g.filter(x => x.status === "ja" && x.hoofdgerecht === h).length;
     const chip = (grp, k, l, n) => `<button class="chip-btn" data-fgrp="${grp}" data-fval="${k}" aria-pressed="${F[grp]===k}">${l} ${n}</button>`;
@@ -611,9 +734,20 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
 
   // ---------- taken ----------
+  // Bevestiging bij het afvinken. Bij gewone taken kan je meteen kiezen wat er in het Overzicht komt.
+  function confirmBox(t){
+    const isCheck = t.categorie === CAT_CHECK;
+    const label = String(t.overzicht || ""), info = String(t.overzicht_info || "") || String(t.leverancier || "");
+    return `<div class="confirm" role="group" aria-label="Bevestigen"><span>“${esc(t.titel)}” ${isCheck ? "als gecheckt aanduiden?" : "markeren als gedaan?"}</span>
+      ${isCheck ? "" : `<div class="ov-fields"><label>In het overzicht als<input id="ovl-${esc(t.id)}" value="${esc(label)}" placeholder="bv. Fotograaf · leeg = niet tonen"></label><label>Info<input id="ovi-${esc(t.id)}" value="${esc(info)}" placeholder="bv. naam, datum, contact"></label></div>`}
+      <button class="btn" data-confirm-done="${esc(t.id)}">${isCheck ? "Ja, gecheckt" : "Ja, gedaan"}</button><button class="chip-btn" data-confirm-cancel>Annuleer</button></div>`;
+  }
   function viewTasks(){
     const cats = [...new Set(S.tasks.map(t => t.categorie).filter(Boolean))].sort((a,b) => a.localeCompare(b, "nl"));
-    let list = S.tasks.filter(t => (F.taskView === "alle" || (F.taskView === "gedaan" ? t.done : !t.done)) && (!F.taskCat || t.categorie === F.taskCat));
+    // Open "Te checken"-punten staan in een eigen lijstje bovenaan, niet tussen de maanden.
+    let list = S.tasks.filter(t => (F.taskView === "alle" || (F.taskView === "gedaan" ? t.done : !t.done)) && (!F.taskCat || t.categorie === F.taskCat) && !(t.categorie === CAT_CHECK && !t.done));
+    const checks = S.tasks.filter(t => t.categorie === CAT_CHECK && !t.done).sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0));
+    const showChecks = F.taskView !== "gedaan" && (!F.taskCat || F.taskCat === CAT_CHECK);
     sortTasks(list);
     const canDrag = S.canWrite && F.taskView === "open" && !F.taskCat;
     const who = w => `<option value="louis"${w==="louis"?" selected":""}>Louis</option><option value="partner"${w==="partner"?" selected":""}>${esc(partnerLabel())}</option><option value="samen"${(!w||w==="samen")?" selected":""}>Samen</option>`;
@@ -641,8 +775,18 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <select class="cell" ${attrs("tasks", t.id, "wie", 'aria-label="Wie"')}>${who(t.wie)}</select>
         <div class="flags">${flag}</div>
         ${delBtn("tasks", t.id)}
-        ${confirmDone === t.id ? `<div class="confirm" role="group" aria-label="Bevestigen"><span>“${esc(t.titel)}” markeren als gedaan?</span><button class="btn" data-confirm-done="${esc(t.id)}">Ja, gedaan</button><button class="chip-btn" data-confirm-cancel>Annuleer</button></div>` : ""}</div>`;
+        ${confirmDone === t.id ? confirmBox(t) : ""}</div>`;
     }).join("");
+    const checkRows = checks.map(t => `<div class="task check-row">
+        <input type="checkbox" ${attrs("tasks", t.id, "done", 'data-t="bool" aria-label="Gecheckt"')}>
+        <div class="main"><textarea class="cell title auto" rows="1" ${attrs("tasks", t.id, "titel", 'aria-label="Te checken"')}>${esc(t.titel)}</textarea>${t.opmerking ? `<div class="sub">${esc(t.opmerking)}</div>` : ""}</div>
+        ${delBtn("tasks", t.id)}
+        ${confirmDone === t.id ? confirmBox(t) : ""}</div>`).join("");
+    const checkBlock = showChecks ? `<section class="checks">
+        <h3>Te checken <span>${checks.length}</span></h3>
+        ${checks.length ? `<div class="tasks">${checkRows}</div>` : `<p class="meta" style="margin:0">Niets meer te checken.</p>`}
+        <form class="add-inline" data-add="check"><input name="titel" required placeholder="Iets te checken toevoegen…" aria-label="Iets te checken toevoegen"${dis()}><button class="btn" type="submit"${dis()}>Toevoegen</button></form>
+      </section>` : "";
     const cnt = { open: S.tasks.filter(t=>!t.done).length, gedaan: S.tasks.filter(t=>t.done).length, alle: S.tasks.length };
     const chip = (k, l) => `<button class="chip-btn" data-tview="${k}" aria-pressed="${F.taskView===k}">${l} ${cnt[k]}</button>`;
     return `
@@ -651,6 +795,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="chips">${chip("open","Te doen")}${chip("gedaan","Gedaan")}${chip("alle","Alle")}</div>
         <select id="t-cat-filter" class="search" style="flex:0 1 220px" aria-label="Filter op categorie"><option value="">Alle categorieën</option>${cats.map(c => `<option${F.taskCat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
       </div>
+      ${checkBlock}
       ${list.length ? `<div class="tasks">${items}</div>` : `<div class="empty">Geen taken in deze weergave.</div>`}
       <form class="add" data-add="tasks">
         <label class="grow">Taak<input id="t-titel" name="titel" required placeholder="bv. Champagne bestellen"${dis()}></label>
@@ -926,7 +1071,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           </div>
         </div>
         ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
-        ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li data-row-id="${esc(g.id)}"><button class="handle" data-handle="${esc(g.id)}" data-kind="member" title="Sleep om de volgorde te wijzigen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${ms.length < 2 ? " disabled" : dis()}>⋮⋮</button><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${g.optioneel ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
+        ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li data-row-id="${esc(g.id)}"><button class="handle" data-handle="${esc(g.id)}" data-kind="member" title="Sleep om de volgorde te wijzigen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${ms.length < 2 ? " disabled" : dis()}>⋮⋮</button><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${isOpt(g) ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
         <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${invitesLocked() ? "" : delBtn("households", h.id)}</div>
       </article>`;
     }).join("")}</div>`;
@@ -1207,6 +1352,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(el.tagName === "SELECT" || el.type === "checkbox") el.blur();
   });
   main.addEventListener("click", e => {
+    if(e.target.closest("[data-ov-edit]")){ OV.edit = true; renderTab(); return; }
+    if(e.target.closest("[data-ov-done]")){ OV.edit = false; renderTab(); return; }
     const spot = e.target.closest("[data-spot]");
     if(spot){ onSpot(spot.dataset.spot); return; }
     const pg = e.target.closest("[data-place-guest]");
@@ -1228,7 +1375,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(fb){ F[fb.dataset.fgrp] = fb.dataset.fval; renderTab(); return; }
     if(e.target.closest("[data-burg]")){ F.burg = !F.burg; renderTab(); return; }
     const cd = e.target.closest("[data-confirm-done]");
-    if(cd){ const id = cd.dataset.confirmDone; confirmDone = null; write("tasks", id, { done: true }); toast("Gemarkeerd als gedaan"); renderTab(); return; }
+    if(cd){ const id = cd.dataset.confirmDone; confirmDone = null;
+      const patch = { done: true }, li = document.getElementById("ovl-" + id), ii = document.getElementById("ovi-" + id);
+      if(li){ patch.overzicht = li.value.trim(); patch.overzicht_info = ii ? ii.value.trim() : ""; }
+      write("tasks", id, patch); const wasCheck = (S.tasks.find(x => x.id === id) || {}).categorie === CAT_CHECK;
+      toast(patch.overzicht ? `Gedaan · staat nu in het Overzicht als ${patch.overzicht}` : wasCheck ? "Gecheckt" : "Gemarkeerd als gedaan"); renderTab(); return; }
     if(e.target.closest("[data-confirm-cancel]")){ confirmDone = null; renderTab(); return; }
     const tv = e.target.closest("[data-tview]");
     if(tv){ F.taskView = tv.dataset.tview; renderTab(); return; }
@@ -1256,6 +1407,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
         email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
     if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, opmerking:"" }); }
+    if(kind === "check"){ if(!txt("titel")) return; add("tasks", { titel: txt("titel"), categorie: CAT_CHECK, deadline: "", wie: "samen", done:false, leverancier:"", bedrag:0, opmerking:"", prioriteit:"" }); form.reset(); return; }
     if(kind === "tasks"){ if(!txt("titel")) return; add("tasks", { titel: txt("titel"), categorie: txt("categorie"), deadline: txt("deadline"), wie: txt("wie")||"samen", done:false, leverancier:"", bedrag:0, opmerking:"", prioriteit:"" }); }
     if(kind === "tables"){ if(!txt("naam")) return; add("tables", { naam: txt("naam"), plaatsen: Math.max(1, parseInt(fd.get("plaatsen"),10)||10) }); }
     if(kind === "households"){ if(!txt("naam")) return; add("households", { naam: txt("naam"), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" }); }
