@@ -25,7 +25,8 @@
   window.TPApi = { post: post, apiUrl: apiUrl };
 
   window.createApiDb = function (opts) {
-    var COLS = ["guests", "households", "budget", "tasks", "tables", "info"];
+    var COLS = ["guests", "households", "budget", "tasks", "tables", "info", "questions"];
+    var serverCols = null; // welke collecties het script teruggeeft (een oudere versie kent "questions" nog niet)
     var cache = { settings: {} };
     COLS.forEach(function (c) { cache[c] = []; });
     var listeners = {};
@@ -59,6 +60,7 @@
         var j = JSON.stringify(res.data);
         if (loaded && j === lastJson) return;
         lastJson = j;
+        serverCols = Object.keys(res.data || {});
         COLS.forEach(function (c) { cache[c] = res.data[c] || []; });
         cache.settings = res.data.settings || {};
         loaded = true;
@@ -163,6 +165,7 @@
         window.addEventListener("focus", function () { load().catch(function () {}); });
       },
       newId: genId,
+      has: function (col) { return !serverCols || serverCols.indexOf(col) >= 0; },
     };
     return db;
   };

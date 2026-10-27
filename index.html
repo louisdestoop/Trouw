@@ -232,6 +232,22 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .confirm .ov-fields label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
 .confirm .ov-fields input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-weight:400;font-size:14px;color:var(--ink)}
 @media (max-width:720px){ .task.check-row{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:none} .task.check-row>*{grid-area:auto!important} .confirm .ov-fields{grid-template-columns:1fr} }
+/* Vragen */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;align-items:start}
+.qgrid.single{grid-template-columns:1fr}
+.qgrid.single .qcard{font-size:16px}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.qhead h3{margin:0;font-family:var(--display);font-weight:400;font-size:20px;color:var(--plum)}
+.qlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.qlist li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dotted var(--line)}
+.qlist li:first-child{border-top:none}
+.qlist li input[type=checkbox]{margin-top:8px}
+.qbody{display:flex;flex-direction:column;min-width:0}
+.qbody textarea{resize:none;overflow:hidden;line-height:1.4}
+.qbody .qq{font-weight:500}
+.qbody .qa{font-size:13.5px;color:var(--muted);padding-top:0}
+.qlist li.done .qq{text-decoration:line-through;color:var(--muted);font-weight:400}
 /* Tafels */
 .unplaced{border:1px dashed var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .unplaced h3,.table-card h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -430,6 +446,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <a href="#gasten" data-tab="gasten">Gasten<span class="n" id="n-gasten"></span></a>
     <a href="#budget" data-tab="budget">Budget<span class="n" id="n-budget"></span></a>
     <a href="#taken" data-tab="taken">Taken<span class="n" id="n-taken"></span></a>
+    <a href="#vragen" data-tab="vragen">Vragen<span class="n" id="n-vragen"></span></a>
     <a href="#tafels" data-tab="tafels">Tafelschikking<span class="n" id="n-tafels"></span></a>
     <a href="#uitnodigingen" data-tab="uitnodigingen">Uitnodigingen<span class="n" id="n-uitn"></span></a>
   </nav>
@@ -447,9 +464,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 (function(){
   const WEDDING = new Date(2027, 6, 10);
-  const TABS = ["overzicht","gasten","budget","taken","tafels","uitnodigingen"];
-  const COLS = ["guests","households","budget","tasks","tables","info"];
-  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], settings:{}, canWrite:true, dbOk:null };
+  const TABS = ["overzicht","gasten","budget","taken","vragen","tafels","uitnodigingen"];
+  const COLS = ["guests","households","budget","tasks","tables","info","questions"];
+  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], settings:{}, canWrite:true, dbOk:null };
   const F = { q:"", via:"alle", status:"alle", burg:false, taskView:"open", taskCat:"" };
   let db = null, pending = false;
   const main = document.getElementById("main");
@@ -482,6 +499,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const code = e && e.code;
     if(code === "unauthorized") return; // de app vraagt de code opnieuw
     if(code === "not_configured") toast(e.message);
+    else if(e && e.message === "unknown_collection") toast("Werk eerst het script (Code.gs) bij, dan kan je vragen bewaren.");
     else if(e && e.message === "locked") toast("De uitnodigingen zijn verstuurd: dit kan niet meer gewijzigd worden.");
     else toast("Opslaan lukte niet. Controleer je internetverbinding; de gegevens worden opnieuw geladen.");
     console.error(e);
@@ -534,6 +552,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("n-budget").textContent = S.budget.length || "";
     document.getElementById("n-taken").textContent = S.tasks.filter(t => !t.done).length || "";
     document.getElementById("n-tafels").textContent = S.tables.length || "";
+    document.getElementById("n-vragen").textContent = S.questions.filter(q => !q.beantwoord).length || "";
     document.getElementById("n-uitn").textContent = S.households.filter(h => !h.rsvp_op).length || "";
     document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === currentTab() ? "page" : "false"));
   }
@@ -806,6 +825,48 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <label>Wie<select id="t-wie" name="wie"${dis()}>${who("samen")}</select></label>
         <button class="btn" type="submit"${dis()}>Taak toevoegen</button>
       </form>`;
+  }
+
+  // ---------- vragen per leverancier ----------
+  const FQ = { view:"open", lev:"", lastLev:"" };
+  function viewQuestions(){
+    const qs = S.questions;
+    const levs = [...new Set(qs.map(q => q.leverancier || "Algemeen"))].sort((a,b) => a.localeCompare(b, "nl"));
+    const known = [...new Set(levs.concat(S.tasks.map(t => String(t.leverancier || "").trim()).filter(Boolean)))].sort((a,b) => a.localeCompare(b, "nl"));
+    const shown = qs.filter(q => (FQ.view === "alle" || (FQ.view === "beantwoord" ? q.beantwoord : !q.beantwoord)) && (!FQ.lev || (q.leverancier || "Algemeen") === FQ.lev));
+    const groups = {};
+    shown.forEach(q => { const k = q.leverancier || "Algemeen"; (groups[k] = groups[k] || []).push(q); });
+    const openOf = l => qs.filter(q => (q.leverancier || "Algemeen") === l && !q.beantwoord).length;
+    const order = (a,b) => (!!a.beantwoord - !!b.beantwoord) || (Number(a.created)||0) - (Number(b.created)||0);
+    const card = l => `<section class="qcard">
+        <div class="qhead"><h3>${esc(l)}</h3><span class="meta">${openOf(l)} open</span></div>
+        <ol class="qlist">${groups[l].sort(order).map(q => `<li class="${q.beantwoord ? "done" : ""}">
+          <input type="checkbox" ${attrs("questions", q.id, "beantwoord", 'data-t="bool" aria-label="Beantwoord"')}${q.beantwoord ? " checked" : ""}>
+          <div class="qbody">
+            <textarea class="cell auto qq" rows="1" ${attrs("questions", q.id, "vraag", 'aria-label="Vraag"')}>${esc(q.vraag)}</textarea>
+            <textarea class="cell auto qa" rows="1" placeholder="Antwoord of notitie…" ${attrs("questions", q.id, "antwoord", 'aria-label="Antwoord"')}>${esc(q.antwoord)}</textarea>
+          </div>
+          ${delBtn("questions", q.id)}</li>`).join("")}</ol>
+      </section>`;
+    const cnt = { open: qs.filter(q => !q.beantwoord).length, beantwoord: qs.filter(q => q.beantwoord).length, alle: qs.length };
+    const chip = (k, l) => `<button class="chip-btn" data-qview="${k}" aria-pressed="${FQ.view === k}">${l} ${cnt[k]}</button>`;
+    const notReady = db && db.has && !db.has("questions");
+    const names = Object.keys(groups).sort((a,b) => a.localeCompare(b, "nl"));
+    return `
+      <div class="panel-head"><h2>Vragen</h2><span class="meta">Per leverancier, om mee te nemen naar een bespreking</span></div>
+      ${notReady ? `<div class="notice">Het script kent dit tabblad nog niet. Plak de nieuwste Code.gs en implementeer een nieuwe versie.</div>` : ""}
+      <form class="add" data-add="questions">
+        <label>Leverancier<input name="leverancier" list="q-levs" value="${esc(FQ.lev || FQ.lastLev)}" placeholder="bv. Ma Kwizien Tielt" style="width:190px"${dis()}></label>
+        <datalist id="q-levs">${known.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+        <label class="grow">Vraag<input name="vraag" required placeholder="bv. Is er een kinderstoel voorzien?"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Vraag toevoegen</button>
+      </form>
+      <div class="toolbar">
+        <div class="chips">${chip("open", "Open")}${chip("beantwoord", "Beantwoord")}${chip("alle", "Alle")}</div>
+        <select id="q-lev-filter" class="search" style="flex:0 1 240px" aria-label="Toon één leverancier"><option value="">Alle leveranciers</option>${levs.map(l => `<option${FQ.lev === l ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+      </div>
+      ${names.length ? `<div class="qgrid${FQ.lev ? " single" : ""}">${names.map(card).join("")}</div>`
+        : `<div class="empty">${qs.length ? "Geen vragen in deze weergave." : "Nog geen vragen. Voeg hierboven de eerste toe."}</div>`}`;
   }
 
   // ---------- tafels (bovenaanzicht) ----------
@@ -1210,7 +1271,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function renderTab(){
     if(S.dbOk === null){ main.innerHTML = `<div class="empty">Gegevens laden…</div>`; return; }
     const t = currentTab();
-    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "uitnodigingen" ? viewInvites() : viewInfo();
+    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "uitnodigingen" ? viewInvites() : viewInfo();
     const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
     if(form && head) head.after(form);
     const lb = main.querySelector(".lockbar"); if(lb && head) head.after(lb);
@@ -1341,6 +1402,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   main.addEventListener("change", e => {
     const el = e.target;
     if(el.id === "t-cat-filter"){ F.taskCat = el.value; renderTab(); return; }
+    if(el.id === "q-lev-filter"){ FQ.lev = el.value; renderTab(); return; }
     if(el.dataset.setting){ saveSettings({ [el.dataset.setting]: el.value.trim() }); return; }
     if(el.dataset.seat !== undefined){ if(el.value) write("guests", el.value, { tafel: el.dataset.seat }); el.blur(); return; }
     const { col, id, f, t } = el.dataset; if(!col || !id || !f) return;
@@ -1360,6 +1422,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(el.tagName === "SELECT" || el.type === "checkbox") el.blur();
   });
   main.addEventListener("click", e => {
+    const qv = e.target.closest("[data-qview]"); if(qv){ FQ.view = qv.dataset.qview; renderTab(); return; }
     if(e.target.closest("[data-ov-edit]")){ OV.edit = true; renderTab(); return; }
     if(e.target.closest("[data-ov-done]")){ OV.edit = false; renderTab(); return; }
     const spot = e.target.closest("[data-spot]");
@@ -1421,6 +1484,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
         email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
     if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, opmerking:"" }); }
+    if(kind === "questions"){ if(!txt("vraag")) return; const lev = txt("leverancier") || "Algemeen";
+      FQ.lastLev = lev;
+      add("questions", { leverancier: lev, vraag: txt("vraag"), antwoord: "", beantwoord: false, volgorde: "" }); const v = form.querySelector('[name="vraag"]'); if(v){ v.value = ""; v.focus(); } return; }
     if(kind === "check"){ if(!txt("titel")) return; add("tasks", { titel: txt("titel"), categorie: CAT_CHECK, deadline: "", wie: "samen", done:false, leverancier:"", bedrag:0, opmerking:"", prioriteit:"" }); form.reset(); return; }
     if(kind === "tasks"){ if(!txt("titel")) return; add("tasks", { titel: txt("titel"), categorie: txt("categorie"), deadline: txt("deadline"), wie: txt("wie")||"samen", done:false, leverancier:"", bedrag:0, opmerking:"", prioriteit:"" }); }
     if(kind === "tables"){ if(!txt("naam")) return; add("tables", { naam: txt("naam"), plaatsen: Math.max(1, parseInt(fd.get("plaatsen"),10)||10) }); }
