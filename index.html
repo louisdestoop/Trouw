@@ -737,7 +737,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   // Bevestiging bij het afvinken. Bij gewone taken kan je meteen kiezen wat er in het Overzicht komt.
   function confirmBox(t){
     const isCheck = t.categorie === CAT_CHECK;
-    const label = String(t.overzicht || ""), info = String(t.overzicht_info || "") || String(t.leverancier || "");
+    if(!CF || CF.id !== t.id) CF = { id: t.id, label: String(t.overzicht || ""), info: String(t.overzicht_info || "") || String(t.leverancier || "") };
+    const label = CF.label, info = CF.info;
     return `<div class="confirm" role="group" aria-label="Bevestigen"><span>“${esc(t.titel)}” ${isCheck ? "als gecheckt aanduiden?" : "markeren als gedaan?"}</span>
       ${isCheck ? "" : `<div class="ov-fields"><label>In het overzicht als<input id="ovl-${esc(t.id)}" value="${esc(label)}" placeholder="bv. Fotograaf · leeg = niet tonen"></label><label>Info<input id="ovi-${esc(t.id)}" value="${esc(info)}" placeholder="bv. naam, datum, contact"></label></div>`}
       <button class="btn" data-confirm-done="${esc(t.id)}">${isCheck ? "Ja, gecheckt" : "Ja, gedaan"}</button><button class="chip-btn" data-confirm-cancel>Annuleer</button></div>`;
@@ -1221,7 +1222,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     renderSummary();
     renderSheet(document.activeElement && (document.activeElement.id === "sheet-q" || document.activeElement.id === "join-q"));
     if(drag){ pending = true; return; }
-    if(!force && isEditing()){ pending = true; return; }
+    if(!force && (isEditing() || pressing || confirmDone !== null)){ pending = true; return; }
     pending = false;
     if(!force && isSearch(document.activeElement)){
       const gl = document.getElementById("guest-list"); if(gl){ gl.innerHTML = guestRows(); return; }
@@ -1245,7 +1246,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   const lastDayOf = ym => { const [y,m] = ym.split("-").map(Number); return `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2,"0")}`; };
   const monthLabel = ym => { const [y,m] = ym.split("-").map(Number); return new Date(y, m-1, 1).toLocaleDateString("nl-BE",{month:"long",year:"numeric"}); };
-  let drag = null, confirmDone = null;
+  let drag = null, confirmDone = null, CF = null, pressing = false;
   function saveOrder(col, ids){
     ids.forEach((id, i) => { const x = S[col].find(y => y.id === id); if(x && x.volgorde !== i + 1) write(col, id, { volgorde: i + 1 }); });
   }
@@ -1322,13 +1323,20 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
 
   // ---------- events ----------
-  main.addEventListener("focusout", () => { if(pending) setTimeout(() => { if(!isEditing()) renderAll(); }, 0); });
-  window.addEventListener("hashchange", () => renderAll(true));
+  main.addEventListener("focusout", () => { if(pending) setTimeout(() => { if(!isEditing() && !pressing) renderAll(); }, 0); });
+  // Tijdens een tik (vinger neer, nog niet los) nooit de pagina herbouwen, anders gaat de tik verloren.
+  main.addEventListener("pointerdown", () => { pressing = true; }, true);
+  const release = () => { if(!pressing) return; pressing = false; if(pending) setTimeout(() => { if(!isEditing() && !pressing && !drag) renderAll(); }, 80); };
+  document.addEventListener("pointerup", release, true);
+  document.addEventListener("pointercancel", release, true);
+  window.addEventListener("hashchange", () => { confirmDone = null; CF = null; renderAll(true); });
 
   main.addEventListener("input", e => {
     if(isSearch(e.target)){ F.q = e.target.value; document.getElementById("guest-list").innerHTML = guestRows(); }
     if(e.target.id === "i-search"){ FI.q = e.target.value; const il = document.getElementById("inv-list"); if(il) il.innerHTML = inviteCards(); }
     if(e.target.matches("textarea.auto")){ e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }
+    if(CF && e.target.id === "ovl-" + CF.id) CF.label = e.target.value;
+    if(CF && e.target.id === "ovi-" + CF.id) CF.info = e.target.value;
   });
   main.addEventListener("change", e => {
     const el = e.target;
@@ -1377,10 +1385,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const cd = e.target.closest("[data-confirm-done]");
     if(cd){ const id = cd.dataset.confirmDone; confirmDone = null;
       const patch = { done: true }, li = document.getElementById("ovl-" + id), ii = document.getElementById("ovi-" + id);
-      if(li){ patch.overzicht = li.value.trim(); patch.overzicht_info = ii ? ii.value.trim() : ""; }
+      const tk = S.tasks.find(x => x.id === id);
+      if(tk && tk.categorie !== CAT_CHECK){
+        const draft = CF && CF.id === id ? CF : null;
+        patch.overzicht = String(draft ? draft.label : li ? li.value : "").trim();
+        patch.overzicht_info = String(draft ? draft.info : ii ? ii.value : "").trim();
+      }
+      CF = null;
       write("tasks", id, patch); const wasCheck = (S.tasks.find(x => x.id === id) || {}).categorie === CAT_CHECK;
       toast(patch.overzicht ? `Gedaan · staat nu in het Overzicht als ${patch.overzicht}` : wasCheck ? "Gecheckt" : "Gemarkeerd als gedaan"); renderTab(); return; }
-    if(e.target.closest("[data-confirm-cancel]")){ confirmDone = null; renderTab(); return; }
+    if(e.target.closest("[data-confirm-cancel]")){ confirmDone = null; CF = null; renderTab(); return; }
     const tv = e.target.closest("[data-tview]");
     if(tv){ F.taskView = tv.dataset.tview; renderTab(); return; }
     const un = e.target.closest("[data-unseat]");
