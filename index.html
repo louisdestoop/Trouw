@@ -108,7 +108,7 @@ main{display:flex;flex-direction:column;gap:16px;min-height:200px}
 
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 table{border-collapse:collapse;width:100%}
-.guests table{min-width:990px}.budget table{min-width:880px}
+.guests table{min-width:990px}.budget table{min-width:950px}
 th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 6px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
 td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:last-child td{border-bottom:none}
@@ -776,6 +776,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const vatRate = b => VAT[String(b.btw || "")] || 0;
   const inclVat = (b, v) => Math.round((Number(v) || 0) * (1 + vatRate(b)) * 100) / 100;
   const postCost = b => inclVat(b, Number(b.werkelijk) ? b.werkelijk : b.geraamd);
+  // Kolom "eigen": aangevinkt = kost is sowieso voor jullie (bv. huwelijkscontract); niet aangevinkt = wordt per gast verdeeld met de ouders.
+  const isOwn = b => b.eigen === true || String(b.eigen || "").toUpperCase() === "TRUE";
   // Wie betaalt welke gast: familie en vrienden van de ouders (relatie Familie / Ouders) betalen de ouders van die kant, de rest betalen jullie.
   const BG = { basis:"uitgenodigd" };
   function payerOf(g){
@@ -784,23 +786,25 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   function costSplit(){
     const guests = S.guests.filter(g => BG.basis === "bevestigd" ? g.status === "ja" : g.status !== "nee");
-    const total = Math.round(sum(S.budget, postCost) * 100) / 100, n = guests.length, per = n ? total / n : 0;
+    const r2 = v => Math.round(v * 100) / 100;
+    const total = r2(sum(S.budget.filter(b => !isOwn(b)), postCost)), own = r2(sum(S.budget.filter(isOwn), postCost));
+    const n = guests.length, per = n ? total / n : 0;
     const groups = [
       { k:"koppel", naam:"Florence & Louis", wie:"vrienden, collega's, kennissen en jullie twee" },
       { k:"ouders_louis", naam:"Ouders Louis", wie:"familie en vrienden van de ouders, kant Louis" },
       { k:"chantal", naam:"Chantal", wie:"familie en vrienden van de ouders, kant Florence" },
-    ].map(x => { const c = guests.filter(g => payerOf(g) === x.k).length; return Object.assign(x, { n: c, bedrag: c * per }); });
-    return { total, n, per, groups };
+    ].map(x => { const c = guests.filter(g => payerOf(g) === x.k).length; return Object.assign(x, { n: c, gasten: c * per, bedrag: c * per + (x.k === "koppel" ? own : 0) }); });
+    return { total, own, n, per, groups };
   }
   function costCard(){
     const c = costSplit();
     const bchip = (k, l) => `<button class="chip-btn" data-bbasis="${k}" aria-pressed="${BG.basis === k}">${l}</button>`;
     return `<section class="cost-card">
-        <div class="cost-head"><div><h3>Kost per gast</h3><p class="meta">Totaal incl. btw (werkelijk waar ingevuld, anders geraamd) gedeeld door het aantal gasten</p></div>
+        <div class="cost-head"><div><h3>Kost per gast</h3><p class="meta">Gedeelde posten incl. btw (werkelijk waar ingevuld, anders geraamd) gedeeld door het aantal gasten. Posten met 'Enkel wij' betalen jullie volledig zelf.</p></div>
           <div class="chips">${bchip("uitgenodigd", "Alle uitgenodigden")}${bchip("bevestigd", "Enkel bevestigd")}</div></div>
-        <div class="cost-big"><b>${c.n ? eur2(c.per) : "—"}</b><span>${eur2(c.total)} ÷ ${c.n} gasten</span></div>
+        <div class="cost-big"><b>${c.n ? eur2(c.per) : "—"}</b><span>${eur2(c.total)} gedeeld ÷ ${c.n} gasten</span></div>
         <table class="cost-split"><thead><tr><th>Wie betaalt</th><th class="num">Gasten</th><th class="num">Bedrag</th></tr></thead>
-          <tbody>${c.groups.map(g => `<tr><td><b>${g.naam}</b><small>${g.wie}</small></td><td class="num">${g.n}</td><td class="num">${eur2(g.bedrag)}</td></tr>`).join("")}</tbody>
+          <tbody>${c.groups.map(g => `<tr><td><b>${g.naam}</b><small>${g.wie}${g.k === "koppel" && c.own ? ` · ${eur2(g.gasten)} gasten + ${eur2(c.own)} enkel wij` : ""}</small></td><td class="num">${g.n}</td><td class="num">${eur2(g.bedrag)}</td></tr>`).join("")}</tbody>
           <tfoot><tr><td>Totaal</td><td class="num">${c.n}</td><td class="num">${eur2(c.groups.reduce((a, g) => a + g.bedrag, 0))}</td></tr></tfoot></table>
         <p class="meta" style="margin:0">${BG.basis === "uitgenodigd" ? "Alle gasten zonder afzegging, ook de optionele +1's." : "Enkel gasten die bevestigd hebben."} Kinderen tellen als volledige gast. Wie welke gast betaalt, volgt de relatie en de kant (Via) in Gasten.</p>
       </section>`;
@@ -819,15 +823,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <td class="w-vat">${vatSel(b)}${vatRate(b) ? `<small class="vat-incl">incl. ${eur2(postCost(b))}</small>` : ""}</td>
         <td class="num" style="color:${diff===null?"var(--muted)":diff>0?"var(--warn)":"var(--ok)"}">${diff===null?"—":(diff>0?"+":"")+eur2(diff)}</td>
         <td class="c"><input type="checkbox" ${attrs("budget", b.id, "vastgelegd", 'data-t="bool" aria-label="Vastgelegd"')}${b.vastgelegd?" checked":""}></td>
+        <td class="c"><input type="checkbox" ${attrs("budget", b.id, "eigen", 'data-t="bool" aria-label="Enkel wij (ouders betalen niet mee)"')}${isOwn(b)?" checked":""}></td>
         <td><input class="cell" ${attrs("budget", b.id, "opmerking", 'aria-label="Opmerking"')} value="${esc(b.opmerking)}" placeholder="—"></td>
         <td class="num">${delBtn("budget", b.id)}</td></tr>`;
     }).join("");
     return `
       <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)}</span></div>
       ${list.length ? `<div class="scroll budget"><table>
-        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th>Opmerking</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th class="c" title="Aangevinkt: kost is sowieso voor jullie. Niet aangevinkt: ouders betalen per gast mee.">Enkel wij</th><th>Opmerking</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr><td></td><td>Totaal incl. btw</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td></td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr><td></td><td>Totaal incl. btw</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td></td><td></td><td colspan="2"></td></tr></tfoot>
         </table></div>${costCard()}` : `<div class="empty">Nog geen budgetposten. Voeg hierboven de eerste toe.</div>`}
       <form class="add" data-add="budget">
         <label class="grow">Post<input id="b-post" name="post" required placeholder="bv. Champagne"${dis()}></label>
@@ -1647,7 +1652,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(kind === "guests"){ if(!txt("voornaam")) return;
       add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
         email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
-    if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, opmerking:"" }); }
+    if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, eigen:false, opmerking:"" }); }
     if(kind === "orders"){ if(!txt("wat")) return;
       add("orders", { wat: txt("wat"), bij: txt("bij"), besteld_op: txt("besteld_op"), toegekomen: false, toegekomen_op: "", opmerking: "" });
       form.reset(); const d = form.querySelector('[name="besteld_op"]'); if(d) d.value = todayIso(); const w = form.querySelector('[name="wat"]'); if(w) w.focus(); return; }
