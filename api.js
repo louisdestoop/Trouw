@@ -22,7 +22,7 @@
     return u;
   }
 
-  window.TPApi = { post: post, apiUrl: apiUrl };
+  window.TPApi = { post: post, apiUrl: apiUrl, version: 2 };
 
   window.createApiDb = function (opts) {
     var COLS = ["guests", "households", "budget", "tasks", "tables", "info", "questions", "orders", "menu", "events"];
@@ -33,8 +33,9 @@
     var loaded = false, inflight = 0, queue = [], timer = null, lastJson = "", pollTimer = null, writeSeq = 0;
 
     function freezeCopy(o) { var c = {}; Object.keys(o).forEach(function (k) { if (k !== "id") c[k] = o[k]; }); return Object.freeze(c); }
+    function list(col) { return cache[col] || (cache[col] = []); } // ook een collectie die deze versie nog niet kent
     function snap(col) {
-      var docs = cache[col].map(function (o) { var d = freezeCopy(o); return { id: o.id, exists: true, data: function () { return d; }, metadata: {} }; });
+      var docs = list(col).map(function (o) { var d = freezeCopy(o); return { id: o.id, exists: true, data: function () { return d; }, metadata: {} }; });
       return { docs: docs, size: docs.length, empty: !docs.length, docChanges: function () { return []; }, metadata: { fromCache: false, hasPendingWrites: inflight > 0 } };
     }
     function settingsSnap() { var d = Object.assign({}, cache.settings); return { id: "settings", exists: true, data: function () { return d; } }; }
@@ -43,7 +44,7 @@
         try { cb(col === "settings" ? settingsSnap() : snap(col)); } catch (e) { console.error(e); }
       });
     }
-    function emitAll() { COLS.concat(["settings"]).forEach(emit); }
+    function emitAll() { Object.keys(listeners).forEach(emit); }
 
     function fail(res) {
       var code = res && res.error === "unauthorized" ? "unauthorized" : "unavailable";
@@ -61,7 +62,7 @@
         if (loaded && j === lastJson) return;
         lastJson = j;
         serverCols = Object.keys(res.data || {});
-        COLS.forEach(function (c) { cache[c] = res.data[c] || []; });
+        COLS.concat(serverCols.filter(function (c) { return c !== "settings" && COLS.indexOf(c) < 0; })).forEach(function (c) { cache[c] = res.data[c] || []; });
         cache.settings = res.data.settings || {};
         loaded = true;
         emitAll();
@@ -106,13 +107,13 @@
       return {
         id: id,
         update: function (patch) {
-          var o = cache[col].find(function (x) { return x.id === id; });
+          var o = list(col).find(function (x) { return x.id === id; });
           if (o) Object.assign(o, patch);
           emit(col);
           return enqueue({ op: "update", col: col, id: id, patch: patch });
         },
         delete: function () {
-          cache[col] = cache[col].filter(function (x) { return x.id !== id; });
+          cache[col] = list(col).filter(function (x) { return x.id !== id; });
           emit(col);
           return enqueue({ op: "delete", col: col, id: id });
         },
@@ -133,7 +134,7 @@
           doc: function (id) { return docRef(col, id); },
           add: function (data) {
             var id = genId();
-            cache[col].push(Object.assign({ id: id }, data));
+            list(col).push(Object.assign({ id: id }, data));
             emit(col);
             return enqueue({ op: "add", col: col, id: id, data: data }).then(function () { return docRef(col, id); });
           },

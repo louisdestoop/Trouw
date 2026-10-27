@@ -604,8 +604,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="sheet" class="sheet" role="dialog" aria-label="Plaats aan tafel" hidden></div>
 
-<script src="config.js"></script>
-<script src="api.js"></script>
+<script src="config.js?v=20261027c"></script>
+<script src="api.js?v=20261027c"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="vendor/jszip.min.js" defer></script>
 <script>
@@ -2145,6 +2145,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     savePin(pin);
     loginEl.hidden = true;
     setSync("Laden…");
+    if(!(window.TPApi && TPApi.version >= 2)) showNotice("Er is een nieuwe versie van de app. Herlaad de pagina (of sluit de app en open ze opnieuw).");
     db = createApiDb({
       pin,
       onUnauthorized: () => { savePin(""); location.reload(); },
