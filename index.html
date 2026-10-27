@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/favicon-64.png">
-<title>Trouwplanner Louis &amp; Florence</title>
+<title>Trouwplanner Florence &amp; Louis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Figtree:wght@400;500;600&display=swap">
@@ -291,6 +291,14 @@ body.sheet-open{padding-bottom:62vh}
 .inv-msg{margin:0;padding:8px 12px;background:var(--blush-soft);border-radius:8px;font-size:14px;white-space:pre-line}
 .inv-members{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .inv-members li{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dotted var(--line);font-size:14px}
+.lockbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:14px}
+.lockbar label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--plum);white-space:nowrap}
+.lockbar .meta{flex:1 1 240px;font-size:13px}
+.lockbar.ask{background:var(--warn-soft);border-color:var(--warn)}
+.lockbar.ask > div:first-child{flex:1 1 260px}
+.lockbar .acts{display:flex;flex-wrap:wrap;gap:8px}
+.lockbar.on{background:var(--ok-soft);border-color:var(--ok);align-items:flex-start;flex-wrap:nowrap}
+.lockbar .lock-ic{flex:0 0 22px;height:22px;border-radius:50%;background:var(--ok);color:var(--on-accent);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
 .inv-members li.dragging{background:var(--blush-soft);border-radius:6px}
 .inv-members .handle{padding:4px 4px;margin-left:-4px}
 .inv-members .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -328,7 +336,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <div id="login" class="login" hidden>
   <form id="login-form" class="login-card" autocomplete="on">
     <p class="eyebrow">Zaterdag 10 juli 2027</p>
-    <h1>Louis <span class="amp">&amp;</span> Florence</h1>
+    <h1>Florence <span class="amp">&amp;</span> Louis</h1>
     <label for="pin">Toegangscode</label>
     <input id="pin" name="pin" type="password" autocomplete="current-password" required>
     <button class="btn" type="submit">Openen</button>
@@ -339,7 +347,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <header class="top">
     <div>
       <p class="eyebrow">Zaterdag 10 juli 2027</p>
-      <h1>Louis <span class="amp">&amp;</span> <input id="partner-input" class="name-input" placeholder="partner" aria-label="Naam partner" autocomplete="off"></h1>
+      <h1>Florence <span class="amp">&amp;</span> Louis</h1>
       <p class="venue">Rotsaert Green Venue · Wortegem-Petegem</p>
     </div>
     <div class="countdown">
@@ -410,7 +418,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
   const daysUntil = iso => { if(!iso) return null; const [y,m,d] = iso.split("-").map(Number); return Math.round((new Date(y,m-1,d) - today())/864e5); };
   const fmtMonth = iso => { if(!iso) return ""; const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("nl-BE",{day:"numeric",month:"short",year:"numeric"}); };
-  const partnerLabel = () => (S.settings.partner || "").trim() || "Partner";
+  const partnerLabel = () => "Florence";
+  // Vergrendeling: zodra de uitnodigingen verstuurd zijn, mogen de QR-codes (gezinnen en hun code) nooit meer veranderen.
+  const invitesLocked = () => !!String(S.settings.uitnodigingen_verstuurd || "").trim();
   const dis = () => S.canWrite ? "" : " disabled";
   const currentTab = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : "overzicht"; };
   const gname = g => [g.voornaam, g.achternaam].filter(Boolean).join(" ") || "Naamloos";
@@ -423,6 +433,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const code = e && e.code;
     if(code === "unauthorized") return; // de app vraagt de code opnieuw
     if(code === "not_configured") toast(e.message);
+    else if(e && e.message === "locked") toast("De uitnodigingen zijn verstuurd: dit kan niet meer gewijzigd worden.");
     else toast("Opslaan lukte niet. Controleer je internetverbinding; de gegevens worden opnieuw geladen.");
     console.error(e);
   }
@@ -448,9 +459,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const d = Math.round((WEDDING - today())/864e5);
     document.getElementById("days").textContent = d > 0 ? d : (d === 0 ? "Vandaag!" : "✓");
     document.getElementById("days-sub").textContent = d > 1 ? "dagen tot de grote dag" : d === 1 ? "dag tot de grote dag" : d === 0 ? "" : "getrouwd";
-    const pi = document.getElementById("partner-input");
-    if(document.activeElement !== pi) pi.value = S.settings.partner || "";
-    pi.disabled = !S.canWrite;
 
     const counted = S.guests.filter(isCounted);
     const yes = S.guests.filter(g => g.status === "ja" && !g.optioneel).length;
@@ -883,7 +891,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(old){
       const oh = S.households.find(x => x.id === old);
       if(oh && !S.guests.some(x => x.gezin === old)){
-        if(oh.rsvp_op) msg += ` · "${oh.naam}" is nu leeg maar bleef bewaard omdat het al antwoordde`;
+        if(invitesLocked()) msg += ` · "${oh.naam}" is nu leeg maar bleef bewaard omdat de uitnodigingen verstuurd zijn`;
+        else if(oh.rsvp_op) msg += ` · "${oh.naam}" is nu leeg maar bleef bewaard omdat het al antwoordde`;
         else { remove("households", old); msg += ` · het oude gezin is verwijderd`; }
       } else if(oh) renameHousehold(old);
     }
@@ -915,7 +924,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         </div>
         ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
         ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li data-row-id="${esc(g.id)}"><button class="handle" data-handle="${esc(g.id)}" data-kind="member" title="Sleep om de volgorde te wijzigen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${ms.length < 2 ? " disabled" : dis()}>⋮⋮</button><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${g.optioneel ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
-        <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${delBtn("households", h.id)}</div>
+        <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${invitesLocked() ? "" : delBtn("households", h.id)}</div>
       </article>`;
     }).join("")}</div>`;
   }
@@ -933,6 +942,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       : `<input id="set-${k}" data-setting="${k}" type="${type}" placeholder="${esc(ph)}" value="${esc(S.settings[k] || "")}"${dis()}>`}</label>`;
     return `
       <div class="panel-head"><h2>Uitnodigingen</h2><span class="meta">${answered} van ${hs.length} gezinnen hebben geantwoord</span></div>
+      ${lockBar()}
       <form class="add" data-add="households">
         <label class="grow">Naam op de uitnodiging<input id="h-naam" name="naam" required placeholder="bv. Familie Peeters"${dis()}></label>
         <button class="btn" type="submit"${dis()}>Gezin toevoegen</button>
@@ -958,6 +968,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div id="inv-list">${inviteCards()}</div>`;
   }
 
+  let lockConfirm = false;
+  function lockBar(){
+    if(invitesLocked()) return `<div class="lockbar on" role="status"><span class="lock-ic" aria-hidden="true">✓</span><div><b>Uitnodigingen verstuurd op ${esc(fmtStamp(S.settings.uitnodigingen_verstuurd))}.</b> De QR-codes liggen vast: gezinnen kunnen niet meer verwijderd worden. Namen en leden aanpassen kan wel. Een nieuw gezin krijgt een eigen, nieuwe QR-code.</div></div>`;
+    if(lockConfirm) return `<div class="lockbar ask" role="group" aria-label="Bevestigen"><div><b>Zijn alle uitnodigingen verstuurd?</b> Daarna kunnen gezinnen en hun QR-codes nooit meer verwijderd of vervangen worden. Dit kan je in de app niet ongedaan maken.</div>
+      <div class="acts"><button class="btn" data-lock-yes${dis()}>Ja, ze zijn verstuurd</button><button class="chip-btn" data-lock-no>Annuleer</button></div></div>`;
+    return `<div class="lockbar"><label><input type="checkbox" data-lock-ask${dis()}> <b>Uitnodigingen verstuurd</b></label><span class="meta">Vink dit aan zodra de uitnodigingen met de QR-codes de deur uit zijn. Vanaf dan liggen de codes vast.</span></div>`;
+  }
   function renderJoinSheet(listOnly){
     const h = S.households.find(x => x.id === J.h);
     if(!h){ J.h = null; sheet.hidden = true; document.body.classList.remove("sheet-open"); return; }
@@ -997,6 +1014,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
   function invitesClick(e){
     const t = e.target;
+    if(t.closest("[data-lock-ask]")){ e.preventDefault(); lockConfirm = true; renderTab(); const b = main.querySelector("[data-lock-yes]"); if(b) b.focus(); return true; }
+    if(t.closest("[data-lock-no]")){ lockConfirm = false; renderTab(); return true; }
+    if(t.closest("[data-lock-yes]")){
+      lockConfirm = false;
+      const d = new Date(), p = n => String(n).padStart(2, "0");
+      saveSettings({ uitnodigingen_verstuurd: `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}` });
+      toast("Vergrendeld: de QR-codes liggen vast"); renderTab(); return true;
+    }
     const f = t.closest("[data-ifilter]"); if(f){ FI.filter = f.dataset.ifilter; renderTab(); return true; }
     const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy); return true; }
     const dl = t.closest("[data-qr-dl]");
@@ -1039,6 +1064,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "uitnodigingen" ? viewInvites() : viewInfo();
     const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
     if(form && head) head.after(form);
+    const lb = main.querySelector(".lockbar"); if(lb && head) head.after(lb);
     autosize();
   }
   const isSearch = el => el && (el.id === "g-search" || el.id === "i-search");
@@ -1213,6 +1239,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         return;
       }
       const col = del.dataset.del, id = del.dataset.id;
+      if(col === "households" && invitesLocked()){ toast("De uitnodigingen zijn verstuurd: gezinnen kunnen niet meer verwijderd worden."); return; }
       if(col === "households") S.guests.filter(g => g.gezin === id).forEach(g => write("guests", g.id, { gezin: "" }));
       if(col === "tables") S.guests.filter(g => g.tafel === id).forEach(g => write("guests", g.id, { tafel: "", plaats: null, definitief: false }));
       remove(col, id);
@@ -1232,7 +1259,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(kind === "info"){ if(!txt("sectie") || !txt("label")) return; add("info", { sectie: txt("sectie"), label: txt("label"), waarde: txt("waarde"), volgorde: 1000 + S.info.length }); }
     const first = form.querySelector("input[required]"); form.reset(); if(first) first.focus();
   });
-  document.getElementById("partner-input").addEventListener("change", e => saveSettings({ partner: e.target.value.trim() }));
 
   // ---------- start: aanmelden met de toegangscode ----------
   const PIN_KEY = "tp_pin";
