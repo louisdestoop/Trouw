@@ -302,6 +302,16 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .dish-x:hover{background:var(--line);color:var(--warn)}
 .mvoor{margin-top:6px}
 .mvoor input{background:var(--bg)}
+.dgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.dblok{background:var(--bg);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.dblok h4{margin:0;font-family:var(--display);font-weight:400;font-size:19px;color:var(--plum)}
+.dblok>.meta{margin:0 0 4px}
+.dlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dlist li{display:grid;grid-template-columns:minmax(0,1fr) 28px;grid-template-areas:"n x" "o x";align-items:start;padding:4px 0;border-top:1px dotted var(--line)}
+.dlist .dname{grid-area:n;font-weight:500}
+.dlist .dnote{grid-area:o;font-size:13.5px;color:var(--muted);padding-top:0}
+.dlist .dish-x{grid-area:x;position:static}
+.dblok .mvoor input{background:var(--surface)}
 .mown{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--rasp);font-weight:600}
 .dish:disabled{cursor:default}
 .mline{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px dotted var(--line);font-size:14px}
@@ -1071,7 +1081,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function menuPicks(){
     const seen = new Set(), by = {};
     Object.keys(GANG).forEach(k => by[k] = []);
-    S.menu.filter(m => m.soort !== "voorstel").sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0)).forEach(m => {
+    S.menu.filter(m => !m.soort).sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0)).forEach(m => {
       const k = menuKey(m.gang, m.gerecht);
       if(!by[m.gang] || seen.has(k)) return;
       seen.add(k); by[m.gang].push(m);
@@ -1083,9 +1093,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(!S.canWrite) return;
     if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
     const picks = menuPicks()[gang], cfg = GANG[gang];
-    const same = S.menu.filter(m => m.soort !== "voorstel" && m.gang === gang && m.gerecht === gerecht);
+    const same = S.menu.filter(m => !m.soort && m.gang === gang && m.gerecht === gerecht);
     if(same.length){ same.forEach(m => remove("menu", m.id)); return; }
-    if(cfg.kies === 1) S.menu.filter(m => m.soort !== "voorstel" && m.gang === gang).forEach(m => remove("menu", m.id));
+    if(cfg.kies === 1) S.menu.filter(m => !m.soort && m.gang === gang).forEach(m => remove("menu", m.id));
     else if(cfg.kies > 1 && picks.length >= cfg.kies){ toast(`Je koos al ${cfg.kies} ${cfg.titel.toLowerCase()}. Haal er eerst één weg.`); return; }
     add("menu", { gang, gerecht, groep: groep || "" });
   }
@@ -1104,6 +1114,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const v = S.menu.find(m => m.id === id); if(!v) return;
     S.menu.filter(m => m.gang === v.gang && m.gerecht === v.gerecht).forEach(m => remove("menu", m.id));
   }
+  // Dranken: rijen met gang "drank", soort "drank", groep = moment (Apero, Diner, Dansfeest, Algemeen), gerecht = drank, opmerking = details.
+  const DRANK_BLOKKEN = [
+    { k:"Apero", uitleg:"Sowieso champagne en een alcoholvrij alternatief.", ph:"bv. Cava, mocktail" },
+    { k:"Diner", uitleg:"Wijnen bij het diner.", ph:"bv. Rosé" },
+    { k:"Dansfeest", uitleg:"Wat er geschonken wordt tijdens het feest.", ph:"bv. Gin-tonic, espresso martini" },
+    { k:"Algemeen", uitleg:"De hele dag door.", ph:"bv. Fruitsap" },
+  ];
+  const dranken = blok => S.menu.filter(m => m.soort === "drank" && m.groep === blok).sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0));
   function menuText(){
     const p = menuPicks(), lbl = m => dishText(m.gerecht) + (m.groep === "Eigen voorstel" ? " (eigen voorstel, te bespreken)" : ""), list = k => p[k].map(lbl);
     const one = k => p[k][0] ? lbl(p[k][0]) : "nog te kiezen";
@@ -1114,16 +1132,32 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     lines.push("- Vis: " + one("vis"), "- Veggie: " + one("veggie"), "- Groenten: zomergroentjes van het seizoen");
     lines.push("", `Mini-desserts om te delen (${p.dessert.length}/4):`); list("dessert").forEach(x => lines.push("- " + x));
     if(p.extra.length){ lines.push("", "Extra's:"); list("extra").forEach(x => lines.push("- " + x)); }
-    const chosenK = new Set(S.menu.filter(m => m.soort !== "voorstel").map(m => menuKey(m.gang, m.gerecht)));
+    if(S.menu.some(m => m.soort === "drank")){
+      lines.push("", "Dranken:");
+      DRANK_BLOKKEN.forEach(b => { const ds = dranken(b.k); if(ds.length) lines.push(`- ${b.k}: ${ds.map(d => d.gerecht + (String(d.opmerking || "").trim() ? ` (${String(d.opmerking).trim()})` : "")).join(", ")}`); });
+    }
+    const chosenK = new Set(S.menu.filter(m => !m.soort).map(m => menuKey(m.gang, m.gerecht)));
     const los = S.menu.filter(m => m.soort === "voorstel" && !chosenK.has(menuKey(m.gang, m.gerecht)));
     if(los.length){ lines.push("", "Ook te bespreken:"); los.forEach(m => lines.push(`- ${GANG[m.gang] ? GANG[m.gang].titel : m.gang}: ${dishText(m.gerecht)}`)); }
     const opm = String(S.settings.menu_opmerking || "").trim();
     if(opm) lines.push("", "Opmerking: " + opm);
     return lines.join("\n");
   }
+  function drankSec(){
+    const forfait = S.info.find(i => /^prijs drank/i.test(String(i.label || "")));
+    const blok = b => { const ds = dranken(b.k); return `<div class="dblok"><h4>${b.k}</h4><p class="meta">${b.uitleg}</p>
+        ${ds.length ? `<ul class="dlist">${ds.map(d => `<li>
+          <input class="cell dname" ${attrs("menu", d.id, "gerecht", 'aria-label="Drank"')} value="${esc(d.gerecht)}">
+          <input class="cell dnote" ${attrs("menu", d.id, "opmerking", 'aria-label="Details"')} value="${esc(d.opmerking || "")}" placeholder="merk, wie levert, …">
+          <button class="dish-x" data-drank-del="${esc(d.id)}" aria-label="${esc(d.gerecht)} verwijderen" title="Verwijderen"${dis()}>×</button></li>`).join("")}</ul>` : ""}
+        <form class="add-inline mvoor" data-drank="${b.k}"><input name="tekst" placeholder="${esc(b.ph)}" aria-label="Drank toevoegen bij ${b.k}"${dis()}><button class="btn ghost" type="submit"${dis()}>Toevoegen</button></form></div>`; };
+    return `<section class="msec" id="m-dranken"><div class="msec-head"><h3>Dranken</h3></div>
+      <p class="meta">${forfait ? `Offerte: ${esc(forfait.waarde)}.` : ""} Vul aan wat je per moment wil schenken; de details zijn voor jullie en de cateraar.</p>
+      <div class="dgrid2">${DRANK_BLOKKEN.map(blok).join("")}</div></section>`;
+  }
   function viewMenu(){
     const p = menuPicks(), notReady = db && db.has && !db.has("menu");
-    const chosen = new Set(S.menu.filter(m => m.soort !== "voorstel").map(m => menuKey(m.gang, m.gerecht)));
+    const chosen = new Set(S.menu.filter(m => !m.soort).map(m => menuKey(m.gang, m.gerecht)));
     const dish = (gang, s, groep) => {
       const on = chosen.has(menuKey(gang, s)), parts = dishParts(s), full = GANG[gang].kies > 1 && p[gang].length >= GANG[gang].kies && !on;
       return `<button class="dish${on ? " on" : ""}${full ? " full" : ""}" data-dish="${esc(gang)}" data-gerecht="${esc(s)}" data-groep="${esc(groep)}" aria-pressed="${on}"${dis()}>
@@ -1155,6 +1189,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="mline"><span class="ml">Groenten</span><span class="mv"><span>Zomergroentjes van het seizoen</span></span></div>
         ${sum(`Desserts ${p.dessert.length}/4`, "dessert")}
         ${p.extra.length ? sum("Extra's", "extra") : ""}
+        ${DRANK_BLOKKEN.map(b => { const ds = dranken(b.k); return ds.length ? `<div class="mline"><span class="ml">${b.k}</span><span class="mv"><span>${ds.map(d => esc(d.gerecht)).join(", ")}</span></span></div>` : ""; }).join("")}
         <label class="mnote">Opmerking voor de cateraar<textarea class="auto" rows="2" data-setting="menu_opmerking" placeholder="bv. glutenvrije optie, kindermenu …"${dis()}>${esc(S.settings.menu_opmerking || "")}</textarea></label>
         <button class="btn ghost" type="button" data-menu-copy>Kopieer menu als tekst</button>
       </aside>`;
@@ -1175,6 +1210,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           ${sec("veggie", "veggie", "Vegetarisch of vegan.", groups("veggie"))}
           ${sec("dessert", "dessert", "Kies 4 mini-desserts om te delen op tafel. Dessert en koffie zitten in de offerte.", groups("dessert"))}
           ${sec("extra", "extra", "Optioneel, zoveel je wil. Enkel de tablesnacks zitten in de offerte; de rest is mogelijk een supplement.", groups("extra"))}
+          ${drankSec()}
         </div>
       </div>`;
   }
@@ -1864,6 +1900,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
   main.addEventListener("click", e => {
     const bb = e.target.closest("[data-bbasis]"); if(bb){ BG.basis = bb.dataset.bbasis; renderTab(); return; }
+    const ddel = e.target.closest("[data-drank-del]"); if(ddel){ remove("menu", ddel.dataset.drankDel); return; }
     const vdel = e.target.closest("[data-voorstel-del]"); if(vdel){ removeVoorstel(vdel.dataset.voorstelDel); return; }
     const dsh = e.target.closest("[data-dish]"); if(dsh){ toggleDish(dsh.dataset.dish, dsh.dataset.gerecht, dsh.dataset.groep); return; }
     const mt = e.target.closest("[data-mtemp]"); if(mt){ const [k, v] = mt.dataset.mtemp.split(":"); FM[k] = v; renderTab(); return; }
@@ -1926,6 +1963,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   main.addEventListener("submit", e => {
     e.preventDefault();
     const form = e.target, kind = form.dataset.add, fd = new FormData(form);
+    if(form.dataset.drank){ const t = String(fd.get("tekst") || "").trim(); if(!t) return;
+      if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
+      add("menu", { gang: "drank", soort: "drank", groep: form.dataset.drank, gerecht: t, opmerking: "" }); form.reset(); const i = form.querySelector("input"); if(i) i.blur(); renderAll(); return; }
     if(form.dataset.voorstel){ const t = String(fd.get("tekst") || "").trim(); if(!t) return; addVoorstel(form.dataset.voorstel, t); form.reset(); const i = form.querySelector("input"); if(i) i.blur(); renderAll(); return; }
     const txt = k => String(fd.get(k) || "").trim();
     if(kind === "guests"){ if(!txt("voornaam")) return;
