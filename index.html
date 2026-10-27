@@ -291,6 +291,13 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .dish.on{border-color:var(--plum);background:var(--blush-soft)}
 .dish.on .dish-tick{background:var(--plum);border-color:var(--plum);color:var(--on-accent)}
 .dish.full{opacity:.5}
+.dish-c{position:relative;display:flex;min-width:0}
+.dish-c .dish{flex:1;padding-right:34px}
+.dish-x{position:absolute;top:4px;right:4px;width:28px;height:28px;border:none;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;border-radius:50%}
+.dish-x:hover{background:var(--line);color:var(--warn)}
+.mvoor{margin-top:6px}
+.mvoor input{background:var(--bg)}
+.mown{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--rasp);font-weight:600}
 .dish:disabled{cursor:default}
 .mline{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px dotted var(--line);font-size:14px}
 .mline .ml{color:var(--muted)}
@@ -1026,9 +1033,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       { soort:"Vegan", items:["Risotto | Paprika | Tomaat | Avocado","Ratatouille | Linzen | Aubergine | Aardappel"] },
     ],
     dessert: [
+      { soort:"Mini-desserts (sharing)", uitleg:"Uit de formule sharing: minidessertjes op tafel.", items:["Duo van chocolademousse","Panna cotta | Seizoensfruit","Mini-gebakjes","Crème brûlée","Glaasje seizoensfruit","Brownie","Mini-sorbet","Tiramisu"] },
+      { soort:"Mini-desserts (walking dinner)", items:["Variatie macarons","Panna cotta | Coulis","Speculoosmousse","Mini-donuts","Roomrijst","IJstruffels","Mini-éclairs","Boules de Berlin"] },
       { soort:"Op bord", items:["Citroentaartje | Aardbei | Crumble cuberdon | Basilicumolie","Mille framboise | Karamelcrunch | Meringue | Crémeux framboos","Biscuit pistache | Ganache vanille | Pompelmoes | Witte chocolademousse","Huisgemaakte brownie | Karamelsaus | Quenelle van vanille | Crumble","Krokant van yuzu | Chocoladebiscuit | Crémeux passievrucht | Munt"] },
-      { soort:"Simpel & lekker", items:["Citroentaart | Aardbei | Cuberdon","Brownie | Vanille | Karamel","Tiramisu | Speculoos","Panna cotta | Seizoensfruit","Duo van chocolademousse"] },
-      { soort:"Buffet", items:["Buffet Ma Kwizien | Keuze uit chocolademousse, speculoosmousse, flensjes met chocoladesaus, donut wall, mini-magnums, brownie, fruitsalade, cupcakes, bokkenpootjes, florentines, tartines russes, petitfours …","Buffet Royal | Keuze uit fruitsalade, crème brûlée, chocolademousse, tiramisu, soezentoren, flensjes met chocolade, roomijs, donut wall, mini-tompoes, mini-éclair, brownie, bosvruchtentaart, advocaattaart, chocoladetaart, speculoosmousse, mini-zandgebakjes, mini-gebakjes …","Walking dinner | Keuze uit crème brûlée, macarons, panna cotta met coulis, tiramisu, speculoosmousse, brownie, duo van chocolademousse, seizoensfruit, mini-donuts, roomrijst, ijstruffels, mini-éclairs, boules de Berlin"] },
+      { soort:"Simpel & lekker", items:["Citroentaart | Aardbei | Cuberdon","Brownie | Vanille | Karamel","Tiramisu | Speculoos"] },
     ],
     extra: [
       { soort:"Tablesnacks (in de offerte)", items:["Nacho's | Tomatensalsa | Guacamole | Cheddar | Zure room | Pijpajuin","Crackers | Twee huisgemaakte seizoensdips","Koolrabi | Bloemkool | Radijs | Honingtomaat | Thaise dip","Charcuterie | Lomo | Pancetta | Ganda | Chorizo"] },
@@ -1043,7 +1051,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     hapje:{ titel:"Hapjes", kies:6, verplicht:true }, voorgerecht:{ titel:"Voorgerecht", kies:1, verplicht:true },
     vlees:{ titel:"Vlees", kies:1, verplicht:true }, saus:{ titel:"Saus bij het vlees", kies:1, verplicht:true }, side:{ titel:"Side bij het vlees", kies:1, verplicht:true },
     vis:{ titel:"Vis", kies:1, verplicht:true }, veggie:{ titel:"Veggie", kies:1, verplicht:true },
-    dessert:{ titel:"Dessert", kies:1, verplicht:false }, extra:{ titel:"Extra's", kies:0, verplicht:false },
+    dessert:{ titel:"Mini-desserts", kies:4, verplicht:true }, extra:{ titel:"Extra's", kies:0, verplicht:false },
   };
   const FM = { temp:"alle", vtemp:"alle" };
   const dishParts = s => String(s).split("|").map(x => x.trim()).filter(Boolean);
@@ -1052,7 +1060,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function menuPicks(){
     const seen = new Set(), by = {};
     Object.keys(GANG).forEach(k => by[k] = []);
-    [...S.menu].sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0)).forEach(m => {
+    S.menu.filter(m => m.soort !== "voorstel").sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0)).forEach(m => {
       const k = menuKey(m.gang, m.gerecht);
       if(!by[m.gang] || seen.has(k)) return;
       seen.add(k); by[m.gang].push(m);
@@ -1064,29 +1072,47 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(!S.canWrite) return;
     if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
     const picks = menuPicks()[gang], cfg = GANG[gang];
-    const same = S.menu.filter(m => m.gang === gang && m.gerecht === gerecht);
+    const same = S.menu.filter(m => m.soort !== "voorstel" && m.gang === gang && m.gerecht === gerecht);
     if(same.length){ same.forEach(m => remove("menu", m.id)); return; }
-    if(cfg.kies === 1) S.menu.filter(m => m.gang === gang).forEach(m => remove("menu", m.id));
+    if(cfg.kies === 1) S.menu.filter(m => m.soort !== "voorstel" && m.gang === gang).forEach(m => remove("menu", m.id));
     else if(cfg.kies > 1 && picks.length >= cfg.kies){ toast(`Je koos al ${cfg.kies} ${cfg.titel.toLowerCase()}. Haal er eerst één weg.`); return; }
     add("menu", { gang, gerecht, groep: groep || "" });
   }
+  // Eigen voorstellen: rij met soort "voorstel" (kaartje in die gang); kiezen gebeurt zoals bij de gerechten uit de brochure.
+  const voorstellen = gang => S.menu.filter(m => m.soort === "voorstel" && m.gang === gang).sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0));
+  function addVoorstel(gang, tekst){
+    if(!S.canWrite || !tekst) return;
+    if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
+    tekst = tekst.replace(/\s*\|\s*/g, " | ");
+    if(voorstellen(gang).some(v => v.gerecht.toLowerCase() === tekst.toLowerCase())){ toast("Dat voorstel staat er al."); return; }
+    add("menu", { gang, gerecht: tekst, groep: "Eigen voorstel", soort: "voorstel" });
+    const cfg = GANG[gang], n = menuPicks()[gang].length;
+    if(!cfg.kies || n < cfg.kies) add("menu", { gang, gerecht: tekst, groep: "Eigen voorstel" });
+  }
+  function removeVoorstel(id){
+    const v = S.menu.find(m => m.id === id); if(!v) return;
+    S.menu.filter(m => m.gang === v.gang && m.gerecht === v.gerecht).forEach(m => remove("menu", m.id));
+  }
   function menuText(){
-    const p = menuPicks(), list = k => p[k].map(m => dishText(m.gerecht));
-    const one = k => p[k][0] ? dishText(p[k][0].gerecht) : "nog te kiezen";
+    const p = menuPicks(), lbl = m => dishText(m.gerecht) + (m.groep === "Eigen voorstel" ? " (eigen voorstel, te bespreken)" : ""), list = k => p[k].map(lbl);
+    const one = k => p[k][0] ? lbl(p[k][0]) : "nog te kiezen";
     const lines = ["Menu Florence & Louis · 10 juli 2027", ""];
     lines.push(`Hapjes (${p.hapje.length}/6):`); list("hapje").forEach(x => lines.push("- " + x));
     lines.push("", "Voorgerecht: " + one("voorgerecht"), "", "Hoofdgerecht:");
-    lines.push(`- Vlees: ${one("vlees")}${p.saus[0] ? ", saus " + dishText(p.saus[0].gerecht).toLowerCase() : ""}${p.side[0] ? ", " + dishText(p.side[0].gerecht).toLowerCase() : ""}`);
+    lines.push(`- Vlees: ${one("vlees")}${p.saus[0] ? ", saus " + lbl(p.saus[0]) : ""}${p.side[0] ? ", " + lbl(p.side[0]) : ""}`);
     lines.push("- Vis: " + one("vis"), "- Veggie: " + one("veggie"), "- Groenten: zomergroentjes van het seizoen");
-    if(p.dessert[0]) lines.push("", "Dessert: " + one("dessert"));
+    lines.push("", `Mini-desserts om te delen (${p.dessert.length}/4):`); list("dessert").forEach(x => lines.push("- " + x));
     if(p.extra.length){ lines.push("", "Extra's:"); list("extra").forEach(x => lines.push("- " + x)); }
+    const chosenK = new Set(S.menu.filter(m => m.soort !== "voorstel").map(m => menuKey(m.gang, m.gerecht)));
+    const los = S.menu.filter(m => m.soort === "voorstel" && !chosenK.has(menuKey(m.gang, m.gerecht)));
+    if(los.length){ lines.push("", "Ook te bespreken:"); los.forEach(m => lines.push(`- ${GANG[m.gang] ? GANG[m.gang].titel : m.gang}: ${dishText(m.gerecht)}`)); }
     const opm = String(S.settings.menu_opmerking || "").trim();
     if(opm) lines.push("", "Opmerking: " + opm);
     return lines.join("\n");
   }
   function viewMenu(){
     const p = menuPicks(), notReady = db && db.has && !db.has("menu");
-    const chosen = new Set(S.menu.map(m => menuKey(m.gang, m.gerecht)));
+    const chosen = new Set(S.menu.filter(m => m.soort !== "voorstel").map(m => menuKey(m.gang, m.gerecht)));
     const dish = (gang, s, groep) => {
       const on = chosen.has(menuKey(gang, s)), parts = dishParts(s), full = GANG[gang].kies > 1 && p[gang].length >= GANG[gang].kies && !on;
       return `<button class="dish${on ? " on" : ""}${full ? " full" : ""}" data-dish="${esc(gang)}" data-gerecht="${esc(s)}" data-groep="${esc(groep)}" aria-pressed="${on}"${dis()}>
@@ -1096,12 +1122,17 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       const groep = (g.temp && g.temp !== "exquis" ? (g.temp === "koud" ? "Koud · " : "Warm · ") : "") + g.soort;
       return `<div class="dgroup"><h4>${esc(groep)}</h4>${g.uitleg ? `<p class="meta">${esc(g.uitleg)}</p>` : ""}<div class="dgrid">${g.items.map(s => dish(gang, s, groep)).join("")}</div></div>`;
     }).join("");
+    const eigen = gang => {
+      const vs = voorstellen(gang);
+      return `<div class="dgroup"><h4>Eigen voorstel</h4>${vs.length ? `<div class="dgrid">${vs.map(v => `<div class="dish-c">${dish(gang, v.gerecht, "Eigen voorstel")}<button class="dish-x" data-voorstel-del="${esc(v.id)}" aria-label="Voorstel verwijderen" title="Voorstel verwijderen"${dis()}>×</button></div>`).join("")}</div>` : ""}
+        <form class="add-inline mvoor" data-voorstel="${esc(gang)}"><input name="tekst" placeholder="Zelf iets voorstellen om te bespreken met de cateraar…" aria-label="Eigen voorstel ${esc(GANG[gang].titel)}"${dis()}><button class="btn ghost" type="submit"${dis()}>Toevoegen</button></form></div>`;
+    };
     const count = k => { const c = GANG[k], n = p[k].length; return c.kies ? `<span class="mcount${n >= c.kies ? " ok" : ""}">${n} / ${c.kies}</span>` : (n ? `<span class="mcount">${n}</span>` : ""); };
     const tchip = (key, v, l) => `<button class="chip-btn" data-mtemp="${key}:${v}" aria-pressed="${FM[key] === v}">${l}</button>`;
-    const sec = (id, k, intro, body, chips) => `<section class="msec" id="m-${id}"><div class="msec-head"><h3>${esc(GANG[k].titel)}</h3>${count(k)}</div>${intro ? `<p class="meta">${intro}</p>` : ""}${chips ? `<div class="chips">${chips}</div>` : ""}${body}</section>`;
+    const sec = (id, k, intro, body, chips) => `<section class="msec" id="m-${id}"><div class="msec-head"><h3>${esc(GANG[k].titel)}</h3>${count(k)}</div>${intro ? `<p class="meta">${intro}</p>` : ""}${chips ? `<div class="chips">${chips}</div>` : ""}${body}${eigen(k)}</section>`;
     const sum = (label, k, extra) => {
       const items = p[k];
-      return `<div class="mline${GANG[k].verplicht && items.length < GANG[k].kies ? " todo" : ""}"><span class="ml">${label}</span><span class="mv">${items.length ? items.map(m => `<span>${esc(dishText(m.gerecht))}</span>`).join("") : `<em>${GANG[k].verplicht ? "nog te kiezen" : "—"}</em>`}${extra || ""}</span></div>`;
+      return `<div class="mline${GANG[k].verplicht && items.length < GANG[k].kies ? " todo" : ""}"><span class="ml">${label}</span><span class="mv">${items.length ? items.map(m => `<span>${esc(dishText(m.gerecht))}${m.groep === "Eigen voorstel" ? ` <small class="mown">eigen</small>` : ""}</span>`).join("") : `<em>${GANG[k].verplicht ? "nog te kiezen" : "—"}</em>`}${extra || ""}</span></div>`;
     };
     const open = menuOpen();
     const summary = `<aside class="msum">
@@ -1111,7 +1142,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         ${sum("Vlees", "vlees")}${sum("Saus", "saus")}${sum("Side", "side")}
         ${sum("Vis", "vis")}${sum("Veggie", "veggie")}
         <div class="mline"><span class="ml">Groenten</span><span class="mv"><span>Zomergroentjes van het seizoen</span></span></div>
-        ${sum("Dessert", "dessert")}
+        ${sum(`Desserts ${p.dessert.length}/4`, "dessert")}
         ${p.extra.length ? sum("Extra's", "extra") : ""}
         <label class="mnote">Opmerking voor de cateraar<textarea class="auto" rows="2" data-setting="menu_opmerking" placeholder="bv. glutenvrije optie, kindermenu …"${dis()}>${esc(S.settings.menu_opmerking || "")}</textarea></label>
         <button class="btn ghost" type="button" data-menu-copy>Kopieer menu als tekst</button>
@@ -1131,7 +1162,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           ${sec("side", "side", "", groups("side"))}
           ${sec("vis", "vis", "", groups("vis"))}
           ${sec("veggie", "veggie", "Vegetarisch of vegan.", groups("veggie"))}
-          ${sec("dessert", "dessert", "Dessert en koffie zitten in de offerte. Kies 1.", groups("dessert"))}
+          ${sec("dessert", "dessert", "Kies 4 mini-desserts om te delen op tafel. Dessert en koffie zitten in de offerte.", groups("dessert"))}
           ${sec("extra", "extra", "Optioneel, zoveel je wil. Enkel de tablesnacks zitten in de offerte; de rest is mogelijk een supplement.", groups("extra"))}
         </div>
       </div>`;
@@ -1775,6 +1806,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
   main.addEventListener("click", e => {
     const bb = e.target.closest("[data-bbasis]"); if(bb){ BG.basis = bb.dataset.bbasis; renderTab(); return; }
+    const vdel = e.target.closest("[data-voorstel-del]"); if(vdel){ removeVoorstel(vdel.dataset.voorstelDel); return; }
     const dsh = e.target.closest("[data-dish]"); if(dsh){ toggleDish(dsh.dataset.dish, dsh.dataset.gerecht, dsh.dataset.groep); return; }
     const mt = e.target.closest("[data-mtemp]"); if(mt){ const [k, v] = mt.dataset.mtemp.split(":"); FM[k] = v; renderTab(); return; }
     if(e.target.closest("[data-menu-copy]")){ const txt = menuText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Menu gekopieerd. Plak het in een mail aan de cateraar."), () => { window.prompt("Kopieer het menu:", txt); }); return; }
@@ -1836,6 +1868,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   main.addEventListener("submit", e => {
     e.preventDefault();
     const form = e.target, kind = form.dataset.add, fd = new FormData(form);
+    if(form.dataset.voorstel){ const t = String(fd.get("tekst") || "").trim(); if(!t) return; addVoorstel(form.dataset.voorstel, t); form.reset(); const i = form.querySelector("input"); if(i) i.blur(); renderAll(); return; }
     const txt = k => String(fd.get(k) || "").trim();
     if(kind === "guests"){ if(!txt("voornaam")) return;
       add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
