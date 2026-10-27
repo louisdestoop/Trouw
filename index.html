@@ -291,6 +291,8 @@ body.sheet-open{padding-bottom:62vh}
 .inv-msg{margin:0;padding:8px 12px;background:var(--blush-soft);border-radius:8px;font-size:14px;white-space:pre-line}
 .inv-members{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .inv-members li{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dotted var(--line);font-size:14px}
+.inv-members li.dragging{background:var(--blush-soft);border-radius:6px}
+.inv-members .handle{padding:4px 4px;margin-left:-4px}
 .inv-members .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .inv-members .x{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:5px}
 .inv-members .x:hover{color:var(--warn);background:var(--warn-soft)}
@@ -840,10 +842,17 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   const STATUS_TXT = { ja:"komt", nee:"komt niet", open:"nog geen antwoord" };
 
+  // Volgorde binnen een gezin: kolom gezin_volgorde (zelf versleept), anders het gastnummer.
+  const memberRank = g => { const v = Number(g.gezin_volgorde); return g.gezin_volgorde !== "" && g.gezin_volgorde != null && isFinite(v) && v > 0 ? v : 1e6 + (Number(g.nr) || 9999); };
+  const memberOrder = (a, b) => memberRank(a) - memberRank(b) || (a.nr||9999) - (b.nr||9999);
+  function saveMemberOrder(hid, ids){
+    ids.forEach((id, i) => { const g = S.guests.find(x => x.id === id); if(g && Number(g.gezin_volgorde) !== i + 1) write("guests", id, { gezin_volgorde: i + 1 }); });
+    renameHousehold(hid);
+  }
   // Naam op de uitnodiging, afgeleid van de leden: "Jo & Nele Vanderbauwhede", "Ann Van Audenaerde & Filip Mussen", "Justien Mussen (+1)".
   const joinNames = a => a.length < 2 ? (a[0] || "") : a.slice(0, -1).join(", ") + " & " + a[a.length - 1];
   function autoHouseholdName(members){
-    const sorted = [...members].sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const sorted = [...members].sort(memberOrder);
     const real = sorted.filter(g => !g.optioneel), plus = sorted.length > real.length;
     if(!real.length) return "";
     const sur = [...new Set(real.map(g => (g.achternaam || "").trim()))];
@@ -865,7 +874,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function joinHousehold(gid, hid){
     const g = S.guests.find(x => x.id === gid); if(!g || g.gezin === hid) return;
     const old = g.gezin;
-    [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: hid }));
+    [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: hid, gezin_volgorde: "" }));
+    // Had het gezin al een eigen volgorde, dan komen de nieuwkomers achteraan.
+    const ms = S.guests.filter(x => x.gezin === hid).sort(memberOrder);
+    if(ms.some(x => memberRank(x) < 1e6)) ms.forEach((x, i) => { if(Number(x.gezin_volgorde) !== i + 1) write("guests", x.id, { gezin_volgorde: i + 1 }); });
     const newName = renameHousehold(hid);
     let msg = `${gname(g)} toegevoegd aan ${newName}`;
     if(old){
@@ -880,7 +892,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
   function inviteCards(){
     const q = FI.q.trim().toLowerCase();
-    const members = id => S.guests.filter(g => g.gezin === id).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const members = id => S.guests.filter(g => g.gezin === id).sort(memberOrder);
     const hs = [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).filter(h =>
       (FI.filter === "alle" || (FI.filter === "ja" ? !!h.rsvp_op : !h.rsvp_op)) &&
       (!q || String(h.naam).toLowerCase().includes(q) || members(h.id).some(g => gname(g).toLowerCase().includes(q))));
@@ -902,7 +914,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           </div>
         </div>
         ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
-        ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${g.optioneel ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
+        ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li data-row-id="${esc(g.id)}"><button class="handle" data-handle="${esc(g.id)}" data-kind="member" title="Sleep om de volgorde te wijzigen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${ms.length < 2 ? " disabled" : dis()}>⋮⋮</button><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${g.optioneel ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
         <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${delBtn("households", h.id)}</div>
       </article>`;
     }).join("")}</div>`;
@@ -972,7 +984,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function linksCsv(){
     const rows = [["Gezin", "Link", "Code", "Aantal personen", "Gasten"]];
     [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).forEach(h => {
-      const ms = S.guests.filter(g => g.gezin === h.id);
+      const ms = S.guests.filter(g => g.gezin === h.id).sort(memberOrder);
       rows.push([h.naam, rsvpLink(h), h.code, ms.length, ms.map(gname).join(", ")]);
     });
     return "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
@@ -1003,7 +1015,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       const g = S.guests.find(x => x.id === sp.dataset.split), old = g && g.gezin;
       if(!g) return true;
       // de +1 van deze gast gaat mee uit het gezin
-      [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: "" }));
+      [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: "", gezin_volgorde: "" }));
       if(old) renameHousehold(old);
       toast("Uit het gezin gehaald"); return true;
     }
@@ -1013,7 +1025,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       const g = S.guests.find(x => x.id === nh.dataset.newh); if(!g) return true;
       const group = g.optioneel ? [g] : [g, ...plusOneOf(g)];
       const p = add("households", { naam: autoHouseholdName(group) || gname(g), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" });
-      if(p) p.then(ref => { if(ref && ref.id) group.forEach(x => write("guests", x.id, { gezin: ref.id })); });
+      if(p) p.then(ref => { if(ref && ref.id) group.forEach(x => write("guests", x.id, { gezin: ref.id, gezin_volgorde: "" })); });
       return true;
     }
     return false;
@@ -1105,6 +1117,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         if(newMonth !== cur){ write("tasks", t.id, { deadline: newMonth ? lastDayOf(newMonth) : "" }); moved = true; toast(newMonth ? `Verplaatst naar ${monthLabel(newMonth)}` : "Uiterste datum verwijderd"); }
       }
       if(changed || moved){ saveOrder("tasks", ids); if(!moved) toast("Volgorde bewaard"); }
+    } else if(d.kind === "member"){
+      if(changed){ const g = S.guests.find(x => x.id === d.item.dataset.rowId); if(g && g.gezin) saveMemberOrder(g.gezin, ids); toast("Volgorde in het gezin bewaard"); }
     } else if(changed){ saveOrder("budget", ids); toast("Volgorde bewaard"); }
     if(pending) renderAll();
   }
@@ -1114,6 +1128,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const h = e.target.closest("[data-handle]"); if(!h || !S.canWrite || h.dataset.kind === "task") return;
     if(e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
     e.preventDefault();
+    if(h.dataset.kind === "member"){
+      const li = h.closest("li"), sib = e.key === "ArrowUp" ? li.previousElementSibling : li.nextElementSibling;
+      if(!sib) return;
+      li.parentNode.insertBefore(li, e.key === "ArrowUp" ? sib : sib.nextSibling);
+      h.focus();
+      const g = S.guests.find(x => x.id === h.dataset.handle);
+      if(g && g.gezin) saveMemberOrder(g.gezin, [...li.parentNode.querySelectorAll("[data-row-id]")].map(r => r.dataset.rowId));
+      return;
+    }
     const ids = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b)).map(b => b.id);
     const i = ids.indexOf(h.dataset.handle), j = e.key === "ArrowUp" ? i - 1 : i + 1;
     if(i < 0 || j < 0 || j >= ids.length) return;
