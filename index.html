@@ -759,7 +759,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   sheet.addEventListener("click", e => {
     if(e.target.closest("[data-sheet-close]")){ clearTableState(); J.h = null; J.q = ""; renderSheet(); return; }
     const jp = e.target.closest("[data-join-pick]");
-    if(jp && J.h){ write("guests", jp.dataset.joinPick, { gezin: J.h }); toast("Toegevoegd aan het gezin"); return; }
+    if(jp && J.h){ joinHousehold(jp.dataset.joinPick, J.h); return; }
     const g = T.sel && seatMap().map[T.sel.t + ":" + T.sel.i];
     if(e.target.closest("[data-sheet-def]") && g){ write("guests", g.id, { definitief: !g.definitief }); return; }
     if(e.target.closest("[data-sheet-move]") && g){ T.moving = g.id; T.sel = null; refreshTables(); return; }
@@ -839,6 +839,44 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     return m ? `${+m[3]}/${+m[2]}${m[4] ? ` om ${m[4]}u${m[5]}` : ""}` : String(s || "");
   }
   const STATUS_TXT = { ja:"komt", nee:"komt niet", open:"nog geen antwoord" };
+
+  // Naam op de uitnodiging, afgeleid van de leden: "Jo & Nele Vanderbauwhede", "Ann Van Audenaerde & Filip Mussen", "Justien Mussen (+1)".
+  const joinNames = a => a.length < 2 ? (a[0] || "") : a.slice(0, -1).join(", ") + " & " + a[a.length - 1];
+  function autoHouseholdName(members){
+    const sorted = [...members].sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const real = sorted.filter(g => !g.optioneel), plus = sorted.length > real.length;
+    if(!real.length) return "";
+    const sur = [...new Set(real.map(g => (g.achternaam || "").trim()))];
+    const name = real.length === 1 ? gname(real[0])
+      : sur.length === 1 && sur[0] ? joinNames(real.map(g => g.voornaam)) + " " + sur[0]
+      : joinNames(real.map(gname));
+    return name + (plus ? " (+1)" : "");
+  }
+  // De +1-rij van een gast ("+1 van Voornaam Achternaam") in hetzelfde gezin, of zonder gezin als de gast er ook geen heeft.
+  const plusOneOf = g => S.guests.filter(x => x.optioneel && x.id !== g.id && (x.gezin || "") === (g.gezin || "") && x.voornaam === "+1 van " + gname(g));
+  function renameHousehold(hid){
+    const h = S.households.find(x => x.id === hid); if(!h) return "";
+    const n = autoHouseholdName(S.guests.filter(g => g.gezin === hid));
+    if(n && n !== h.naam) write("households", hid, { naam: n });
+    return n || h.naam;
+  }
+  // Gast bij een ander gezin zetten: zijn +1 verhuist mee, de naam van beide gezinnen wordt bijgewerkt
+  // en een oud gezin dat leeg wordt (en nog niet antwoordde) wordt verwijderd.
+  function joinHousehold(gid, hid){
+    const g = S.guests.find(x => x.id === gid); if(!g || g.gezin === hid) return;
+    const old = g.gezin;
+    [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: hid }));
+    const newName = renameHousehold(hid);
+    let msg = `${gname(g)} toegevoegd aan ${newName}`;
+    if(old){
+      const oh = S.households.find(x => x.id === old);
+      if(oh && !S.guests.some(x => x.gezin === old)){
+        if(oh.rsvp_op) msg += ` · "${oh.naam}" is nu leeg maar bleef bewaard omdat het al antwoordde`;
+        else { remove("households", old); msg += ` · het oude gezin is verwijderd`; }
+      } else if(oh) renameHousehold(old);
+    }
+    toast(msg);
+  }
 
   function inviteCards(){
     const q = FI.q.trim().toLowerCase();
@@ -960,13 +998,22 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       zip.generateAsync({ type: "blob" }).then(b => download("QR-codes uitnodigingen.zip", b));
       return true;
     }
-    const sp = t.closest("[data-split]"); if(sp){ write("guests", sp.dataset.split, { gezin: "" }); toast("Uit het gezin gehaald"); return true; }
+    const sp = t.closest("[data-split]");
+    if(sp){
+      const g = S.guests.find(x => x.id === sp.dataset.split), old = g && g.gezin;
+      if(!g) return true;
+      // de +1 van deze gast gaat mee uit het gezin
+      [g, ...plusOneOf(g)].forEach(x => write("guests", x.id, { gezin: "" }));
+      if(old) renameHousehold(old);
+      toast("Uit het gezin gehaald"); return true;
+    }
     const jo = t.closest("[data-join-open]"); if(jo){ J.h = jo.dataset.joinOpen; J.q = ""; renderSheet(); const i = document.getElementById("join-q"); if(i) i.focus(); return true; }
     const nh = t.closest("[data-newh]");
     if(nh){
       const g = S.guests.find(x => x.id === nh.dataset.newh); if(!g) return true;
-      const p = add("households", { naam: gname(g), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" });
-      if(p) p.then(ref => { if(ref && ref.id) write("guests", g.id, { gezin: ref.id }); });
+      const group = g.optioneel ? [g] : [g, ...plusOneOf(g)];
+      const p = add("households", { naam: autoHouseholdName(group) || gname(g), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" });
+      if(p) p.then(ref => { if(ref && ref.id) group.forEach(x => write("guests", x.id, { gezin: ref.id })); });
       return true;
     }
     return false;
