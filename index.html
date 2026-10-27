@@ -366,6 +366,17 @@ body.sheet-open{padding-bottom:62vh}
 .inv-members .x:hover{color:var(--warn);background:var(--warn-soft)}
 .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:var(--line)}
 .dot.ja{background:var(--seat-ok)}.dot.nee{background:var(--warn)}
+.inv-acts .addr-btn.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:600}
+.inv-addr{margin:0;font-size:13.5px;color:var(--muted)}
+.addr-form{display:flex;flex-wrap:wrap;gap:10px}
+.addr-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.addr-form label.full,.addr-form .full{flex:1 1 100%}
+.addr-form label.grow{flex:1 1 180px}
+.addr-form label small{font-weight:400}
+.addr-form input{font-size:16px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:9px 10px;width:100%}
+.addr-form input[name=postcode]{width:110px}
+.addr-known{display:flex;flex-wrap:wrap;gap:6px}
+.addr-form .acts{display:flex;flex-wrap:wrap;gap:8px}
 .inv-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
 @media (max-width:760px){ .inv-settings .grid{grid-template-columns:1fr} }
 /* App-gevoel: tabbladen blijven bovenaan staan */
@@ -944,6 +955,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     refreshTables();
   }
   function renderSheet(listOnly){
+    if(currentTab() === "uitnodigingen" && S.dbOk && A.h){ if(!sheet.querySelector("#addr-form")) renderAddrSheet(); return; }
     if(currentTab() === "uitnodigingen" && S.dbOk && J.h){ renderJoinSheet(listOnly); return; }
     const show = currentTab() === "tafels" && S.dbOk && (T.sel || T.placing || T.moving);
     sheet.hidden = !show; document.body.classList.toggle("sheet-open", !!show);
@@ -977,7 +989,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   sheet.addEventListener("input", e => { if(e.target.id === "sheet-q"){ T.q = e.target.value; renderSheet(true); } if(e.target.id === "join-q"){ J.q = e.target.value; renderSheet(true); } });
   sheet.addEventListener("click", e => {
-    if(e.target.closest("[data-sheet-close]")){ clearTableState(); J.h = null; J.q = ""; renderSheet(); return; }
+    if(e.target.closest("[data-sheet-close]")){ clearTableState(); J.h = null; J.q = ""; A.h = null; sheet.innerHTML = ""; renderSheet(); return; }
+    const sg = e.target.closest("[data-addr-use]");
+    if(sg){ const p = parseAddr(sg.dataset.addrUse); const f = document.getElementById("addr-form"); if(p && f){ f.straat.value = p.straat; f.postcode.value = p.postcode; f.gemeente.value = p.gemeente; } return; }
+    if(e.target.closest("[data-addr-clear]") && A.h){ write("households", A.h, { adres_straat: "", adres_postcode: "", adres_gemeente: "", adres_land: "" }); toast("Adres gewist"); A.h = null; sheet.innerHTML = ""; renderSheet(); renderTab(); return; }
     const jp = e.target.closest("[data-join-pick]");
     if(jp && J.h){ joinHousehold(jp.dataset.joinPick, J.h); return; }
     const g = T.sel && seatMap().map[T.sel.t + ":" + T.sel.i];
@@ -987,7 +1002,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const pk = e.target.closest("[data-sheet-pick]");
     if(pk && T.sel){ write("guests", pk.dataset.sheetPick, { tafel: T.sel.t, plaats: T.sel.i, definitief: false }); T.q = ""; }
   });
-  document.addEventListener("keydown", e => { if(e.key === "Escape" && (T.sel || T.placing || T.moving || J.h)){ clearTableState(); J.h = null; refreshTables(); } });
+  document.addEventListener("keydown", e => { if(e.key === "Escape" && (T.sel || T.placing || T.moving || J.h || A.h)){ clearTableState(); J.h = null; A.h = null; sheet.innerHTML = ""; refreshTables(); } });
 
   function viewTablesOld(){
     const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
@@ -1020,7 +1035,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
 
   // ---------- uitnodigingen ----------
-  const FI = { q:"", filter:"alle" };
+  const FI = { q:"", filter:"alle", addr:"" };
+  // Postadres per uitnodiging (gezin): kolommen adres_straat, adres_postcode, adres_gemeente, adres_land in Gezinnen.
+  const A = { h:null };
+  const hasAddr = h => !!(String(h.adres_straat || "").trim() && String(h.adres_gemeente || "").trim());
+  const addrLine = h => [String(h.adres_straat || "").trim(), [h.adres_postcode, h.adres_gemeente].map(x => String(x || "").trim()).filter(Boolean).join(" "), String(h.adres_land || "").trim()].filter(Boolean).join(", ");
+  const parseAddr = str => { const m = /^\s*(.+?),\s*(\d{4,5})\s+(.+?)\s*$/.exec(String(str || "")); return m ? { straat: m[1], postcode: m[2], gemeente: m[3] } : null; };
   const J = { h:null, q:"" };
   const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const SETTING_FIELDS = [
@@ -1114,6 +1134,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const members = id => S.guests.filter(g => g.gezin === id).sort(memberOrder);
     const hs = [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).filter(h =>
       (FI.filter === "alle" || (FI.filter === "ja" ? !!h.rsvp_op : !h.rsvp_op)) &&
+      (!FI.addr || (FI.addr === "ja" ? hasAddr(h) : !hasAddr(h))) &&
       (!q || String(h.naam).toLowerCase().includes(q) || members(h.id).some(g => gname(g).toLowerCase().includes(q))));
     if(!hs.length) return `<div class="empty">${S.households.length ? "Geen gezinnen die aan deze filter voldoen." : "Nog geen gezinnen. Voeg hierboven het eerste toe."}</div>`;
     return `<div class="invs">${hs.map(h => {
@@ -1129,9 +1150,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
               <button class="chip-btn" data-copy="${esc(link)}">Link kopiëren</button>
               <button class="chip-btn" data-qr-dl="${esc(h.id)}">QR downloaden</button>
               <a class="chip-btn" href="${esc(link)}" target="_blank" rel="noopener">Bekijk als gast</a>
+              <button class="chip-btn addr-btn${hasAddr(h) ? " ok" : ""}" data-addr="${esc(h.id)}"${dis()}>${hasAddr(h) ? "✓ Adres" : "Adres toevoegen"}</button>
             </div>
           </div>
         </div>
+        ${hasAddr(h) ? `<p class="inv-addr">${esc(addrLine(h))}</p>` : ""}
         ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
         ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li data-row-id="${esc(g.id)}"><button class="handle" data-handle="${esc(g.id)}" data-kind="member" title="Sleep om de volgorde te wijzigen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${ms.length < 2 ? " disabled" : dis()}>⋮⋮</button><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${isOpt(g) ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
         <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${invitesLocked() ? "" : delBtn("households", h.id)}</div>
@@ -1161,6 +1184,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <span><b>${n("ja")}</b> komen</span><span><b>${n("nee")}</b> komen niet</span><span><b>${n("open")}</b> nog geen antwoord</span>
         <span>Diner: <b>${yes.filter(g => g.diner).length}</b> (vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")})</span>
         <span><b>${yes.filter(g => (g.dieet || "").trim()).length}</b> met allergie of dieet</span>
+        <span><b>${hs.filter(hasAddr).length}</b> van ${hs.length} adressen</span>
       </div>
       <details class="inv-settings"${S.settings.site_url ? "" : " open"}>
         <summary>Wat gasten zien op de antwoordpagina</summary>
@@ -1169,6 +1193,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="toolbar">
         <input id="i-search" class="search" type="search" placeholder="Zoek een gezin of gast" value="${esc(FI.q)}" aria-label="Zoek een gezin of gast">
         <div class="chips">${chip("alle", "Alle", hs.length)}${chip("ja", "Geantwoord", answered)}${chip("nee", "Nog niet", hs.length - answered)}</div>
+        <span class="sep" aria-hidden="true"></span>
+        <div class="chips"><button class="chip-btn" data-iaddr="ja" aria-pressed="${FI.addr === "ja"}">Adres toegevoegd ${hs.filter(hasAddr).length}</button><button class="chip-btn" data-iaddr="nee" aria-pressed="${FI.addr === "nee"}">Adres nog toe te voegen ${hs.filter(h => !hasAddr(h)).length}</button></div>
         <span class="sep" aria-hidden="true"></span>
         <div class="chips"><button class="chip-btn" data-qr-zip>Alle QR-codes (zip)</button><button class="chip-btn" data-links-csv>Lijst met links (CSV)</button></div>
       </div>
@@ -1185,6 +1211,29 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="acts"><button class="btn" data-lock-yes${dis()}>Ja, ze zijn verstuurd</button><button class="chip-btn" data-lock-no>Annuleer</button></div></div>`;
     return `<div class="lockbar"><label><input type="checkbox" data-lock-ask${dis()}> <b>Uitnodigingen verstuurd</b></label><span class="meta">Vink dit aan zodra de uitnodigingen met de QR-codes de deur uit zijn. Vanaf dan liggen de codes vast.</span></div>`;
   }
+  function renderAddrSheet(){
+    const h = S.households.find(x => x.id === A.h);
+    if(!h){ A.h = null; sheet.hidden = true; document.body.classList.remove("sheet-open"); return; }
+    sheet.hidden = false; document.body.classList.add("sheet-open");
+    const known = [...new Set(S.guests.filter(g => g.gezin === h.id && String(g.adres || "").trim()).map(g => String(g.adres).trim()))].filter(a => parseAddr(a) && parseAddr(a).straat !== String(h.adres_straat || "").trim());
+    sheet.innerHTML = `<div class="sheet-h"><h3>Adres · ${esc(h.naam)}</h3><button class="del" data-sheet-close type="button">Annuleer</button></div>
+      <form id="addr-form" class="addr-form" autocomplete="off">
+        <label class="full">Straat en nummer<input id="addr-straat" name="straat" value="${esc(h.adres_straat || "")}" placeholder="bv. Kerkstraat 12 bus 3"></label>
+        <label>Postcode<input name="postcode" inputmode="numeric" value="${esc(h.adres_postcode || "")}" placeholder="9000"></label>
+        <label class="grow">Gemeente<input name="gemeente" value="${esc(h.adres_gemeente || "")}" placeholder="Gent"></label>
+        <label class="full">Land <small>(leeg = België)</small><input name="land" value="${esc(h.adres_land || "")}"></label>
+        ${known.length ? `<div class="full addr-known">${known.map(a => `<button type="button" class="chip-btn" data-addr-use="${esc(a)}">Overnemen: ${esc(a)}</button>`).join("")}</div>` : ""}
+        <div class="full acts"><button class="btn" type="submit"${dis()}>Adres bewaren</button>${hasAddr(h) ? `<button class="btn ghost" type="button" data-addr-clear${dis()}>Adres wissen</button>` : ""}</div>
+      </form>`;
+  }
+  sheet.addEventListener("submit", e => {
+    if(e.target.id !== "addr-form" || !A.h) return;
+    e.preventDefault();
+    const f = e.target, v = k => String(f[k].value || "").trim();
+    if(!v("straat") || !v("gemeente")){ toast("Vul minstens straat en gemeente in."); return; }
+    write("households", A.h, { adres_straat: v("straat"), adres_postcode: v("postcode"), adres_gemeente: v("gemeente"), adres_land: v("land") });
+    toast("Adres bewaard"); A.h = null; sheet.innerHTML = ""; renderSheet(); renderTab();
+  });
   function renderJoinSheet(listOnly){
     const h = S.households.find(x => x.id === J.h);
     if(!h){ J.h = null; sheet.hidden = true; document.body.classList.remove("sheet-open"); return; }
@@ -1209,10 +1258,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const safeName = s => String(s || "gezin").replace(/[\\/:*?"<>|]+/g, "").trim().slice(0, 80) || "gezin";
   const qrFile = h => `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSvg(rsvpLink(h), 4).replace("<svg ", '<svg width="1000" height="1000" ');
   function linksCsv(){
-    const rows = [["Gezin", "Link", "Code", "Aantal personen", "Gasten"]];
+    const rows = [["Gezin", "Link", "Code", "Aantal personen", "Gasten", "Straat", "Postcode", "Gemeente", "Land"]];
     [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).forEach(h => {
       const ms = S.guests.filter(g => g.gezin === h.id).sort(memberOrder);
-      rows.push([h.naam, rsvpLink(h), h.code, ms.length, ms.map(gname).join(", ")]);
+      rows.push([h.naam, rsvpLink(h), h.code, ms.length, ms.map(gname).join(", "), h.adres_straat || "", h.adres_postcode || "", h.adres_gemeente || "", h.adres_land || ""]);
     });
     return "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
   }
@@ -1233,6 +1282,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       toast("Vergrendeld: de QR-codes liggen vast"); renderTab(); return true;
     }
     const f = t.closest("[data-ifilter]"); if(f){ FI.filter = f.dataset.ifilter; renderTab(); return true; }
+    const fa = t.closest("[data-iaddr]"); if(fa){ FI.addr = FI.addr === fa.dataset.iaddr ? "" : fa.dataset.iaddr; renderTab(); return true; }
+    const ab = t.closest("[data-addr]"); if(ab){ J.h = null; A.h = ab.dataset.addr; renderAddrSheet(); const i = document.getElementById("addr-straat"); if(i) i.focus(); return true; }
     const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy); return true; }
     const dl = t.closest("[data-qr-dl]");
     if(dl){ const h = S.households.find(x => x.id === dl.dataset.qrDl); if(h) download(`QR ${safeName(h.naam)}.svg`, new Blob([qrFile(h)], { type: "image/svg+xml" })); return true; }
@@ -1390,7 +1441,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const release = () => { if(!pressing) return; pressing = false; if(pending) setTimeout(() => { if(!isEditing() && !pressing && !drag) renderAll(); }, 80); };
   document.addEventListener("pointerup", release, true);
   document.addEventListener("pointercancel", release, true);
-  window.addEventListener("hashchange", () => { confirmDone = null; CF = null; renderAll(true); });
+  window.addEventListener("hashchange", () => { confirmDone = null; CF = null; if(A.h){ A.h = null; sheet.innerHTML = ""; } renderAll(true); });
 
   main.addEventListener("input", e => {
     if(isSearch(e.target)){ F.q = e.target.value; document.getElementById("guest-list").innerHTML = guestRows(); }
