@@ -271,6 +271,47 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
   .order{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c b d" ". bij bij" ". dt st"}
   .order>input[type=checkbox]{grid-area:c}.order .obody{grid-area:b}.order .obij{grid-area:bij}.order .odate{grid-area:dt}.order .ostate{grid-area:st}.order>.del{grid-area:d}
 }
+/* Agenda */
+.agenda{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--rasp);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ag-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 16px}
+.ag-head h3{margin:0;font-family:var(--display);font-weight:400;font-size:24px;color:var(--plum)}
+.ag-head .meta{display:block}
+.ag-add{flex-wrap:wrap}
+.ag-add input{flex:1 1 150px}
+.ag-add input[type=date]{flex:0 0 auto}
+.ag-add input[name=uur]{flex:0 0 90px}
+.ag-weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ag-week{background:var(--bg);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ag-week.now{outline:2px solid var(--blush);outline-offset:-2px}
+.ag-wh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding-bottom:4px}
+.ag-wh b{font-family:var(--display);font-weight:400;font-size:19px;color:var(--plum)}
+.ag-wh span:not(.tag){font-size:13px;color:var(--muted)}
+.tag.ag-now{background:var(--blush-soft);color:var(--rasp)}
+.tag.ag-mijl{background:var(--plum);color:var(--on-accent)}
+.tag.ag-tag{background:var(--blush-soft);color:var(--plum)}
+.ag-item{display:grid;grid-template-columns:62px minmax(0,1fr) auto;grid-template-areas:"d w t" "h w t";gap:0 8px;align-items:start;padding:6px 0;border-top:1px dotted var(--line);font-size:14px}
+.ag-item.ag-ev{display:block}
+.ag-ev summary{display:grid;grid-template-columns:62px minmax(0,1fr) auto;grid-template-areas:"d w t" "h w t";gap:0 8px;align-items:start;cursor:pointer;list-style:none}
+.ag-ev summary::-webkit-details-marker{display:none}
+.ag-ev[open] summary .ag-what b{color:var(--plum)}
+.ag-day{grid-area:d;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.ag-time{grid-area:h;font-weight:600;color:var(--plum);font-size:12.5px;font-variant-numeric:tabular-nums}
+.ag-what{grid-area:w;display:flex;flex-direction:column;min-width:0}
+.ag-what b{font-weight:500;line-height:1.3}
+.ag-what small{color:var(--muted);font-size:12.5px}
+.ag-item>.tag,.ag-ev summary>.tag{grid-area:t}
+.ag-task.done .ag-what b{text-decoration:line-through;color:var(--muted)}
+.ag-edit{display:flex;flex-wrap:wrap;gap:6px 8px;padding:8px 0 2px}
+.ag-edit label{display:flex;flex-direction:column;font-size:11.5px;color:var(--muted);font-weight:600;flex:0 1 130px;min-width:0}
+.ag-edit label.grow{flex:1 1 160px}
+.ag-edit label.full{flex:1 1 100%}
+.ag-edit .cell{background:var(--surface);border:1px solid var(--line)}
+.ag-late{display:flex;flex-direction:column;padding-bottom:4px}
+.ag-sub{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);font-weight:600;padding:4px 0 2px}
+.ag-empty{color:var(--muted);font-size:13.5px;padding:6px 0;border-top:1px dotted var(--line)}
+.hide-btn{padding:4px 12px;font-size:13px;margin-left:8px}
+.hidden-budget{display:flex;flex-direction:column;align-items:center;gap:12px}
+.hidden-budget p{margin:0}
 /* Menu */
 .mlayout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 .mlayout .msum{grid-column:2;grid-row:1;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}
@@ -571,8 +612,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 (function(){
   const WEDDING = new Date(2027, 6, 10);
   const TABS = ["overzicht","gasten","budget","taken","vragen","opvolging","menu","tafels","uitnodigingen"];
-  const COLS = ["guests","households","budget","tasks","tables","info","questions","orders","menu"];
-  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], orders:[], menu:[], settings:{}, canWrite:true, dbOk:null };
+  const COLS = ["guests","households","budget","tasks","tables","info","questions","orders","menu","events"];
+  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], orders:[], menu:[], events:[], settings:{}, canWrite:true, dbOk:null };
   const F = { q:"", via:"alle", status:"alle", burg:false, rel:"", taskView:"open", taskCat:"" };
   let db = null, pending = false;
   const main = document.getElementById("main");
@@ -589,6 +630,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const daysUntil = iso => { if(!iso) return null; const [y,m,d] = iso.split("-").map(Number); return Math.round((new Date(y,m-1,d) - today())/864e5); };
   const fmtMonth = iso => { if(!iso) return ""; const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("nl-BE",{day:"numeric",month:"short",year:"numeric"}); };
   const partnerLabel = () => "Florence";
+  // Budget verbergen (bv. als je de app aan iemand toont): enkel op dit toestel, onthouden in de browser.
+  const PRIV = { hide: (() => { try { return localStorage.getItem("tp_hide_budget") === "1"; } catch(_) { return false; } })() };
+  function setHideBudget(v){ PRIV.hide = v; try { localStorage.setItem("tp_hide_budget", v ? "1" : ""); } catch(_) {} renderAll(true); toast(v ? "Budget verborgen" : "Budget weer zichtbaar"); }
+  const maskMoney = str => PRIV.hide ? String(str ?? "").replace(/€\s?\d[\d.,]*/g, "€ •••") : str;
   // Volgorde van de gastenlijst: kolom "volgorde" (versleepbaar, mag een kommagetal zijn), anders het gastnummer.
   const guestRank = g => { const v = Number(g.volgorde); return g.volgorde !== "" && g.volgorde != null && isFinite(v) ? v : (Number(g.nr) || 9999); };
   const guestsSorted = () => [...S.guests].sort((a,b) => guestRank(a) - guestRank(b) || (a.created||0) - (b.created||0));
@@ -645,10 +690,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     setBar("s-guests-bar", counted.length ? yes/counted.length*100 : 0);
 
     const est = sum(S.budget, b => inclVat(b, b.geraamd)), fixed = sum(S.budget.filter(b => b.vastgelegd), b => inclVat(b, b.geraamd));
-    document.getElementById("s-budget").innerHTML = `${eur(fixed)} <small>van ${eur(est)}</small>`;
     const real = sum(S.budget, b => inclVat(b, b.werkelijk));
-    document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
-    setBar("s-budget-bar", est ? fixed/est*100 : 0);
+    if(PRIV.hide){
+      document.getElementById("s-budget").innerHTML = `<small>verborgen</small>`;
+      document.getElementById("s-budget-foot").textContent = "";
+      setBar("s-budget-bar", 0);
+    } else {
+      document.getElementById("s-budget").innerHTML = `${eur(fixed)} <small>van ${eur(est)}</small>`;
+      document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
+      setBar("s-budget-bar", est ? fixed/est*100 : 0);
+    }
 
     const realTasks = S.tasks.filter(t => t.categorie !== CAT_CHECK);
     const done = realTasks.filter(t => t.done).length;
@@ -687,7 +738,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
   function factList(facts){
     if(!facts.length) return "";
-    return `<dl class="facts">${facts.map(f => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}${swatchesOf(f.value)}</dd></div>`).join("")}</dl>`;
+    return `<dl class="facts">${facts.map(f => `<div><dt>${esc(f.label)}</dt><dd>${esc(maskMoney(f.value))}${swatchesOf(f.value)}</dd></div>`).join("")}</dl>`;
   }
   function scheduleHtml(items){
     if(!items.length) return "";
@@ -878,6 +929,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       </section>`;
   }
   function viewBudget(){
+    if(PRIV.hide) return `
+      <div class="panel-head"><h2>Budget</h2></div>
+      <div class="empty hidden-budget"><p>Het budget is verborgen op dit toestel.</p><button class="btn" data-show-budget>Toon budget</button></div>`;
     const list = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b));
     const est = sum(list, b => inclVat(b, b.geraamd)), real = sum(list, b => inclVat(b, b.werkelijk)), fixed = sum(list.filter(b => b.vastgelegd), b => inclVat(b, b.geraamd));
     const vatSel = b => `<select class="cell btw" ${attrs("budget", b.id, "btw", 'aria-label="Btw"')}>${[["","incl."],["21","excl. 21%"],["12","excl. 12%"],["6","excl. 6%"]].map(([v,l]) => `<option value="${v}"${String(b.btw||"")===v?" selected":""}>${l}</option>`).join("")}</select>`;
@@ -896,7 +950,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <td class="num">${delBtn("budget", b.id)}</td></tr>`;
     }).join("");
     return `
-      <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)}</span></div>
+      <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)} <button class="btn ghost hide-btn" data-hide-budget title="Verberg alle bedragen, bv. als je de app aan iemand toont">Verberg budget</button></span></div>
       ${list.length ? `<div class="scroll budget"><table>
         <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th class="c" title="Aangevinkt: kost is sowieso voor jullie. Niet aangevinkt: ouders betalen per gast mee.">Enkel wij</th><th>Opmerking</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
@@ -919,6 +973,66 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       ${isCheck ? "" : `<div class="ov-fields"><label>In het overzicht als<input id="ovl-${esc(t.id)}" value="${esc(label)}" placeholder="bv. Fotograaf · leeg = niet tonen"></label><label>Info<input id="ovi-${esc(t.id)}" value="${esc(info)}" placeholder="bv. naam, datum, contact"></label></div>`}
       <button class="btn" data-confirm-done="${esc(t.id)}">${isCheck ? "Ja, gecheckt" : "Ja, gedaan"}</button><button class="chip-btn" data-confirm-cancel>Annuleer</button></div>`;
   }
+  // ---------- agenda (bovenaan Taken): week per week de taken met een uiterste datum en de afspraken ----------
+  const AG = { start: 0, open: null };
+  const pad2 = n => String(n).padStart(2, "0");
+  const isoOf = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const mondayOf = d => { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const isoWeek = d => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); };
+  const dayLabel = iso => { const [y,m,d] = iso.split("-").map(Number); return new Date(y, m-1, d).toLocaleDateString("nl-BE", { weekday:"short", day:"numeric", month:"numeric" }); };
+  const shortDay = d => d.toLocaleDateString("nl-BE", { day:"numeric", month:"short" });
+  const timeKey = u => { const m = /(\d{1,2})\s*[u:h.]?\s*(\d{2})?/.exec(String(u || "")); return m ? pad2(m[1]) + (m[2] || "00") : "9999"; };
+  const MIJLPALEN = { "2027-07-03": "Burgerlijke trouw", "2027-07-10": "Trouwfeest" };
+  const WEEKS = 4;
+  function viewAgenda(){
+    const notReady = db && db.has && !db.has("events");
+    const m0 = addDays(mondayOf(today()), AG.start * 7), thisMonday = isoOf(mondayOf(today()));
+    const tasks = S.tasks.filter(t => t.categorie !== CAT_CHECK && /^\d{4}-\d{2}-\d{2}/.test(String(t.deadline || "")));
+    const evs = S.events.filter(e => /^\d{4}-\d{2}-\d{2}/.test(String(e.datum || "")));
+    const whoL = w => w === "louis" ? "Louis" : w === "partner" ? partnerLabel() : "samen";
+    const evRow = e => `<details class="ag-item ag-ev"${AG.open === e.id ? " open" : ""} data-ag-id="${esc(e.id)}">
+        <summary><span class="ag-day">${esc(dayLabel(e.datum.slice(0,10)))}</span><span class="ag-time">${esc(e.uur || "")}</span><span class="ag-what"><b>${esc(e.titel || "Afspraak")}</b>${e.waar ? `<small>${esc(e.waar)}</small>` : ""}</span><span class="tag ag-tag">Afspraak</span></summary>
+        <div class="ag-edit">
+          <label>Datum<input class="cell" type="date" ${attrs("events", e.id, "datum", 'aria-label="Datum"')} value="${esc(e.datum.slice(0,10))}"></label>
+          <label>Uur<input class="cell" ${attrs("events", e.id, "uur", 'aria-label="Uur"')} value="${esc(e.uur || "")}" placeholder="bv. 14u00"></label>
+          <label class="grow">Wat<input class="cell" ${attrs("events", e.id, "titel", 'aria-label="Wat"')} value="${esc(e.titel || "")}"></label>
+          <label class="grow">Waar / met wie<input class="cell" ${attrs("events", e.id, "waar", 'aria-label="Waar"')} value="${esc(e.waar || "")}" placeholder="—"></label>
+          <label class="full">Notitie<textarea class="cell auto" rows="1" ${attrs("events", e.id, "notitie", 'aria-label="Notitie"')} placeholder="—">${esc(e.notitie || "")}</textarea></label>
+          <div>${delBtn("events", e.id)}</div>
+        </div></details>`;
+    const taskRow = (t, late) => `<div class="ag-item ag-task${t.done ? " done" : ""}${late ? " late" : ""}"><span class="ag-day">${esc(dayLabel(t.deadline.slice(0,10)))}</span><span class="ag-time"></span><span class="ag-what"><b>${esc(t.titel)}</b><small>${esc(whoL(t.wie))}${t.leverancier ? " · " + esc(t.leverancier) : ""}</small></span><span class="tag ${t.done ? "ok" : late ? "late" : "soon"}">${t.done ? "Gedaan" : late ? "Te laat" : "Taak"}</span></div>`;
+    const weeks = [];
+    for(let i = 0; i < WEEKS; i++){
+      const from = addDays(m0, i * 7), to = addDays(from, 6), a = isoOf(from), b = isoOf(to);
+      const inW = iso => iso >= a && iso <= b;
+      const es = evs.filter(e => inW(e.datum.slice(0,10))).map(e => ({ k: e.datum.slice(0,10) + "0" + timeKey(e.uur), h: evRow(e) }));
+      const ts = tasks.filter(t => inW(t.deadline.slice(0,10))).map(t => ({ k: t.deadline.slice(0,10) + "1", h: taskRow(t, !t.done && daysUntil(t.deadline) < 0) }));
+      const late = a === thisMonday ? tasks.filter(t => !t.done && t.deadline.slice(0,10) < a).sort((x,y) => x.deadline.localeCompare(y.deadline)) : [];
+      const marks = Object.keys(MIJLPALEN).filter(inW).map(k => `<span class="tag ag-mijl">${esc(MIJLPALEN[k])} · ${esc(dayLabel(k))}</span>`).join("");
+      const rows = [...es, ...ts].sort((x,y) => x.k.localeCompare(y.k)).map(x => x.h).join("");
+      weeks.push(`<div class="ag-week${a === thisMonday ? " now" : ""}">
+          <div class="ag-wh"><b>Week ${isoWeek(from)}</b><span>${esc(shortDay(from))} – ${esc(shortDay(to))}</span>${a === thisMonday ? `<span class="tag ag-now">Deze week</span>` : ""}${marks}</div>
+          ${late.length ? `<div class="ag-late"><span class="ag-sub">Nog open van vroeger · ${late.length}</span>${late.map(t => taskRow(t, true)).join("")}</div>` : ""}
+          ${rows || (late.length ? "" : `<div class="ag-empty">Niets gepland.</div>`)}
+        </div>`);
+    }
+    const toWed = Math.round((WEDDING - mondayOf(today())) / (7 * 864e5));
+    return `<section class="agenda">
+        <div class="ag-head"><div><h3>Agenda</h3><span class="meta">Week per week: taken met een uiterste datum en jullie afspraken${toWed > 0 ? ` · nog ${toWed} weken tot 10 juli` : ""}</span></div>
+          <div class="chips"><button class="chip-btn" data-agnav="-1" aria-label="Vorige weken">‹ Vorige</button><button class="chip-btn" data-agnav="0" aria-pressed="${AG.start === 0}">Vandaag</button><button class="chip-btn" data-agnav="1" aria-label="Volgende weken">Volgende ›</button></div></div>
+        ${notReady ? `<div class="notice">Het script kent de agenda nog niet. Plak de nieuwste Code.gs en implementeer een nieuwe versie.</div>` : ""}
+        <form class="add-inline ag-add" data-agenda>
+          <input name="datum" type="date" value="${todayIso()}" aria-label="Datum" required${dis()}>
+          <input name="uur" placeholder="Uur" aria-label="Uur" style="width:90px"${dis()}>
+          <input name="titel" placeholder="Afspraak, bv. Proeverij Ma Kwizien" aria-label="Afspraak" required${dis()}>
+          <input name="waar" placeholder="Waar / met wie" aria-label="Waar"${dis()}>
+          <button class="btn" type="submit"${dis()}>Afspraak toevoegen</button>
+        </form>
+        <div class="ag-weeks">${weeks.join("")}</div>
+      </section>`;
+  }
+
   function viewTasks(){
     const cats = [...new Set(S.tasks.map(t => t.categorie).filter(Boolean))].sort((a,b) => a.localeCompare(b, "nl"));
     // Open "Te checken"-punten staan in een eigen lijstje bovenaan, niet tussen de maanden.
@@ -968,6 +1082,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const chip = (k, l) => `<button class="chip-btn" data-tview="${k}" aria-pressed="${F.taskView===k}">${l} ${cnt[k]}</button>`;
     return `
       <div class="panel-head"><h2>Taken</h2></div>
+      ${viewAgenda()}
       <div class="toolbar">
         <div class="chips">${chip("open","Te doen")}${chip("gedaan","Gedaan")}${chip("alle","Alle")}</div>
         <select id="t-cat-filter" class="search" style="flex:0 1 220px" aria-label="Filter op categorie"><option value="">Alle categorieën</option>${cats.map(c => `<option${F.taskCat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
@@ -1152,7 +1267,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <button class="dish-x" data-drank-del="${esc(d.id)}" aria-label="${esc(d.gerecht)} verwijderen" title="Verwijderen"${dis()}>×</button></li>`).join("")}</ul>` : ""}
         <form class="add-inline mvoor" data-drank="${b.k}"><input name="tekst" placeholder="${esc(b.ph)}" aria-label="Drank toevoegen bij ${b.k}"${dis()}><button class="btn ghost" type="submit"${dis()}>Toevoegen</button></form></div>`; };
     return `<section class="msec" id="m-dranken"><div class="msec-head"><h3>Dranken</h3></div>
-      <p class="meta">${forfait ? `Offerte: ${esc(forfait.waarde)}.` : ""} Vul aan wat je per moment wil schenken; de details zijn voor jullie en de cateraar.</p>
+      <p class="meta">${forfait ? `Offerte: ${esc(maskMoney(forfait.waarde))}.` : ""} Vul aan wat je per moment wil schenken; de details zijn voor jullie en de cateraar.</p>
       <div class="dgrid2">${DRANK_BLOKKEN.map(blok).join("")}</div></section>`;
   }
   function viewMenu(){
@@ -1702,6 +1817,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "opvolging" ? viewOrders() : t === "menu" ? viewMenu() : t === "uitnodigingen" ? viewInvites() : viewInfo();
     const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
     if(form && head) head.after(form);
+    const ag = main.querySelector(".agenda"); if(ag && head) head.after(ag);
     const lb = main.querySelector(".lockbar"); if(lb && head) head.after(lb);
     autosize();
   }
@@ -1852,6 +1968,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
 
   // ---------- events ----------
+  main.addEventListener("toggle", e => { const d = e.target; if(d && d.matches && d.matches(".ag-ev")) AG.open = d.open ? d.dataset.agId : (AG.open === d.dataset.agId ? null : AG.open); }, true);
   main.addEventListener("focusout", () => { if(pending) setTimeout(() => { if(!isEditing() && !pressing) renderAll(); }, 0); });
   // Tijdens een tik (vinger neer, nog niet los) nooit de pagina herbouwen, anders gaat de tik verloren.
   main.addEventListener("pointerdown", () => { pressing = true; }, true);
@@ -1900,6 +2017,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
   main.addEventListener("click", e => {
     const bb = e.target.closest("[data-bbasis]"); if(bb){ BG.basis = bb.dataset.bbasis; renderTab(); return; }
+    const agn = e.target.closest("[data-agnav]"); if(agn){ const v = Number(agn.dataset.agnav); AG.start = v === 0 ? 0 : AG.start + v * WEEKS; renderTab(); return; }
+    if(e.target.closest("[data-hide-budget]")){ setHideBudget(true); return; }
+    if(e.target.closest("[data-show-budget]")){ setHideBudget(false); return; }
     const ddel = e.target.closest("[data-drank-del]"); if(ddel){ remove("menu", ddel.dataset.drankDel); return; }
     const vdel = e.target.closest("[data-voorstel-del]"); if(vdel){ removeVoorstel(vdel.dataset.voorstelDel); return; }
     const dsh = e.target.closest("[data-dish]"); if(dsh){ toggleDish(dsh.dataset.dish, dsh.dataset.gerecht, dsh.dataset.groep); return; }
@@ -1963,6 +2083,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   main.addEventListener("submit", e => {
     e.preventDefault();
     const form = e.target, kind = form.dataset.add, fd = new FormData(form);
+    if(form.hasAttribute("data-agenda")){
+      const datum = String(fd.get("datum") || "").trim(), titel = String(fd.get("titel") || "").trim(); if(!datum || !titel) return;
+      if(db && db.has && !db.has("events")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
+      add("events", { datum, uur: String(fd.get("uur") || "").trim(), titel, waar: String(fd.get("waar") || "").trim(), notitie: "" });
+      const [y,m,d] = datum.split("-").map(Number), wk = Math.floor((mondayOf(new Date(y, m-1, d)) - mondayOf(today())) / (7 * 864e5));
+      if(wk < AG.start || wk >= AG.start + WEEKS) AG.start = wk;
+      toast(`Afspraak toegevoegd op ${dayLabel(datum)}`);
+      form.querySelectorAll("input").forEach(i => i.blur()); renderAll(); return; }
     if(form.dataset.drank){ const t = String(fd.get("tekst") || "").trim(); if(!t) return;
       if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
       add("menu", { gang: "drank", soort: "drank", groep: form.dataset.drank, gerecht: t, opmerking: "" }); form.reset(); const i = form.querySelector("input"); if(i) i.blur(); renderAll(); return; }

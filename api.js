@@ -25,7 +25,7 @@
   window.TPApi = { post: post, apiUrl: apiUrl };
 
   window.createApiDb = function (opts) {
-    var COLS = ["guests", "households", "budget", "tasks", "tables", "info", "questions", "orders", "menu"];
+    var COLS = ["guests", "households", "budget", "tasks", "tables", "info", "questions", "orders", "menu", "events"];
     var serverCols = null; // welke collecties het script teruggeeft (een oudere versie kent "questions" nog niet)
     var cache = { settings: {} };
     COLS.forEach(function (c) { cache[c] = []; });
