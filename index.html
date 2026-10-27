@@ -266,6 +266,44 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
   .order{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c b d" ". bij bij" ". dt st"}
   .order>input[type=checkbox]{grid-area:c}.order .obody{grid-area:b}.order .obij{grid-area:bij}.order .odate{grid-area:dt}.order .ostate{grid-area:st}.order>.del{grid-area:d}
 }
+/* Menu */
+.mlayout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.mlayout .msum{grid-column:2;grid-row:1;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}
+.mlayout .mmain{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:14px;min-width:0}
+.msec,.msum{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.msum{border-top:3px solid var(--rasp)}
+.msec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.msec-head h3,.mtitle{margin:0;font-family:var(--display);font-weight:400;font-size:22px;color:var(--plum)}
+.mtitle{font-size:26px;margin-top:6px}
+.mtitle-sub{margin:-8px 0 0}
+.msec>.meta{margin:0}
+.mcount{font-size:13px;font-weight:600;color:var(--muted);background:var(--bg);border-radius:999px;padding:2px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mcount.ok{background:var(--ok-soft);color:var(--ok)}
+.dgroup h4{margin:4px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.dgroup .meta{margin:-2px 0 6px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.dish{font:inherit;text-align:left;display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 11px;cursor:pointer;color:var(--ink);min-width:0;transition:border-color .15s,background .15s}
+.dish:hover{border-color:var(--rasp)}
+.dish-tick{flex:0 0 20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px;background:var(--surface)}
+.dish-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dish-txt b{font-weight:500;line-height:1.3}
+.dish-txt small{color:var(--muted);font-size:13px;line-height:1.35}
+.dish.on{border-color:var(--plum);background:var(--blush-soft)}
+.dish.on .dish-tick{background:var(--plum);border-color:var(--plum);color:var(--on-accent)}
+.dish.full{opacity:.5}
+.dish:disabled{cursor:default}
+.mline{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px dotted var(--line);font-size:14px}
+.mline .ml{color:var(--muted)}
+.mline .mv{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mline.todo .mv em{color:var(--warn);font-style:normal}
+.mline .mv em{color:var(--muted);font-style:normal}
+.mnote{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+.mnote textarea{font:inherit;font-weight:400;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;resize:none;overflow:hidden}
+@media (max-width:900px){
+  .mlayout{grid-template-columns:1fr}
+  .mlayout .msum{grid-column:1;grid-row:auto;position:static;max-height:none}
+  .mlayout .mmain{grid-column:1;grid-row:auto}
+}
 /* Vragen */
 .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;align-items:start}
 .qgrid.single{grid-template-columns:1fr}
@@ -492,6 +530,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <a href="#taken" data-tab="taken">Taken<span class="n" id="n-taken"></span></a>
     <a href="#vragen" data-tab="vragen">Vragen<span class="n" id="n-vragen"></span></a>
     <a href="#opvolging" data-tab="opvolging">Opvolging<span class="n" id="n-opvolging"></span></a>
+    <a href="#menu" data-tab="menu">Menu<span class="n" id="n-menu"></span></a>
     <a href="#tafels" data-tab="tafels">Tafelschikking<span class="n" id="n-tafels"></span></a>
     <a href="#uitnodigingen" data-tab="uitnodigingen">Uitnodigingen<span class="n" id="n-uitn"></span></a>
   </nav>
@@ -509,9 +548,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 (function(){
   const WEDDING = new Date(2027, 6, 10);
-  const TABS = ["overzicht","gasten","budget","taken","vragen","opvolging","tafels","uitnodigingen"];
-  const COLS = ["guests","households","budget","tasks","tables","info","questions","orders"];
-  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], orders:[], settings:{}, canWrite:true, dbOk:null };
+  const TABS = ["overzicht","gasten","budget","taken","vragen","opvolging","menu","tafels","uitnodigingen"];
+  const COLS = ["guests","households","budget","tasks","tables","info","questions","orders","menu"];
+  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], orders:[], menu:[], settings:{}, canWrite:true, dbOk:null };
   const F = { q:"", via:"alle", status:"alle", burg:false, rel:"", taskView:"open", taskCat:"" };
   let db = null, pending = false;
   const main = document.getElementById("main");
@@ -599,6 +638,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("n-tafels").textContent = S.tables.length || "";
     document.getElementById("n-vragen").textContent = S.questions.filter(q => !q.beantwoord).length || "";
     document.getElementById("n-opvolging").textContent = S.orders.filter(o => !o.toegekomen).length || "";
+    document.getElementById("n-menu").textContent = menuOpen() || "";
     document.getElementById("n-uitn").textContent = S.households.filter(h => !h.rsvp_op).length || "";
     document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === currentTab() ? "page" : "false"));
   }
@@ -950,6 +990,151 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <datalist id="o-bij">${known.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
       <div class="toolbar"><div class="chips">${chip("onderweg", "Onderweg")}${chip("toegekomen", "Toegekomen")}${chip("alle", "Alle")}</div></div>
       ${list.length ? `<div class="orders">${rows}</div>` : `<div class="empty">${os.length ? "Niets in deze weergave." : "Nog niets besteld. Voeg hierboven de eerste bestelling toe."}</div>`}`;
+  }
+
+  // ---------- menu: keuzes uit de brochure van Ma Kwizien (2026) ----------
+  // De kaart staat hieronder; de gekozen gerechten staan in het tabblad Menu (gang + gerecht).
+  const MENU_KAART = {
+    hapje: [
+      { temp:"koud", soort:"Vis", items:["Crunchy sushi | Zalm | Wasabi","Tartelette | Tartaar Noordzeevis | Paprika","Toast | Gerookte forel | Rode biet | Zure room","Tataki tonijn | Gerookte mayonaise | Daikon","Ambachtelijk knoflookbroodje | Zalm | Zwarte look","Tartaar Sint-Jakobsvrucht | Granny Smith | Bieslook"] },
+      { temp:"koud", soort:"Vlees", items:["Pancetta | Manchego | Pomme Pont-Neuf","Rundstartaar Wit Blauw | Kappertjes | Truffel","Gekonfijte aardappel | Iberico | Tomatensalsa","Rozijnentoast | Gerookte eendenborst | Vijgencompote","Kroepoek | Belgascone spek | Brugse Blomme"] },
+      { temp:"koud", soort:"Vegetarisch", items:["Lolly van geitenkaas | Rode bietcrumble | Witte chocolade","Blini | Feta | Pistache","Crunchy sushi | Wasabi","Avocado | Zure room | Tomatensalsa","Kroepoek | Wakame | Sesam"] },
+      { temp:"koud", soort:"Vegan", items:["Crostini | Fondue van tomaat | Basilicum","Norirolletjes | Zuiderse groentjes","Sucrine | Thaise rijstsalade","Bloemkool | Kikkererwten | Granaatappel | Butternut | Bieslook","Tartaar rode biet | Venkel | Appel | Mosterd"] },
+      { temp:"warm", soort:"Vis", items:["Kroketje uit de Noordzee | Limoen","Zalmbrochette | Teriyaki honing | Sesam","Karnemelkstampers | Noordzeekrab | Peterselie","Goujonettes Pieterman | Verse tartaar | Limoen","Palingkroket | Groene kruiden","Mossel | Curry | Kokos | Steppegras"] },
+      { temp:"warm", soort:"Vlees", items:["Croque pulled pork","Gelakt buikspek | Erwt | Aardappelkrokant","Boudin blanc | Pickles | Mosterdzaad","Bruschetta mozzarella | Tomaat | Pata Negra","Ma Kwizienkroketje | Mosterddip","Karnemelkstampers | Pancetta | Peterselie"] },
+      { temp:"warm", soort:"Vegetarisch", items:["Quiche | Prei | Champignon | Parmezaan","Ratatouillekroketje | Paprika","Bruschetta | Tomaat | Courgette | Mozzarella","Duo van aardappel | Zwarte look","Geitenkaaskroketje | Groene kruiden","Tempura | Pijpajuin | Crème van Oud Brugge","Karnemelkstampers | Peterselie | Mimosa-ei"] },
+      { temp:"warm", soort:"Vegan", items:["Samosa | Kikkererwten","Krokante oesterzwam | Quinoa | Courgette","Tofuspiesje | Tikka masala","Pizzetta | Gegrilde groenten","Zeewierkroketje | Rucola"] },
+      { temp:"warm", soort:"Soepje", uitleg:"Seizoenssoepje met passende garnituur; de cateraar kiest volgens het seizoen. Voorbeelden:", items:["Bloemkool | Lardon","Asperge | Noordzeekrab","Butternut | Pulled pork","Garnalenbisque | Peterselie"] },
+      { temp:"exquis", soort:"Exquis", uitleg:"Luxere hapjes; mogelijk met supplement, na te vragen.", items:["Gegratineerde oester","Toast rozijn | Foie gras | Mango","Krokante coquille | Bloemkool | Beurre noisette","Bisque d'homard | Saffraan","Tartaar Wit Blauw | Oester | Avruga-kaviaar"] },
+    ],
+    voorgerecht: [
+      { temp:"koud", soort:"Vis", items:["Carpaccio tomaat | Burrata | Grijze Noordzeegarnalen | Basilicum","Tartaar coquille | Boekweit | Granny Smith | Avocado | Granaatappel","Aziatische zalmtartaar | Avocado | Calamansi | Edamame","Tataki tonijn | Wasabi | Wakame | Honingtomaat | Kroepoek","Gebrande zalm | Scampi | Limoen | Bieslook | Haringkaviaar","Carpaccio zeebaars | Citrus | Rucola | Radijs"] },
+      { temp:"koud", soort:"Vlees", items:["Carpaccio Wit Blauw | Rucola | Parmezaan | Truffel","Rundstartaar \"Ma Kwizien\" | Bieslook | Rucola | Parmezaan","Vitello tonnato royal","Gerookte Holstein | Fregola sarda | Komkommer | Granny Smith","Gerookte eendenborst | Appel | Witloof | Tuinkers"] },
+      { temp:"koud", soort:"Vegetarisch", items:["Groene asperges | Burrata | Kwarteleitjes | Peterselie","Carpaccio Chioggia-biet | Ricotta | Bieslook | Gekonfijte citroen","Tartaar meloen | Mozzarella | Balsamico","Salade geitenkaas | Walnoot | Honing | Appel | Rozijn"] },
+      { temp:"koud", soort:"Vegan", items:["Gepofte aubergine | Basmati | Tuinbonen | Bloemkool","Tartaar tomaat | Kappertjes | Tuinkers"] },
+      { temp:"warm", soort:"Vis", items:["Courgettini | Coquille | Bisque van schaaldieren","Catch of the day | Kruidenmousseline | Verde groenten | Prei","Roodbaarsfilet | Garnalenbisque | Prei | Venkel","Dorade royal | Butternutrisotto | Wittewijnsaus","Karnemelkstampers | Gepocheerd ei | Garnaal | Beurre noisette","Gebakken kreeft | Ravioli | Citroengras | Courgette","Zalm | Venkel | Parijse champignon | Bieslookpuree","Hondshaai | Verde groenten | Garnaal"] },
+      { temp:"warm", soort:"Vlees", items:["Serranohamkroketje | Krokante salade | Pijnboompit","Ravioli van truffel | Gelakt buikspek | Parijse champignon | Spitskool","Parelhoen | Gnocchi | Wortel","Secreto | Risotto | Krokante groentjes","Shortrib | Open ravioli | Parmezaan | Peterselie","Kwartel | Blé | Paprika | Rode wijn"] },
+      { temp:"warm", soort:"Vegetarisch", items:["Risotto | Boschampignons | Prei | Rucola","Venkelrisotto | Krokante seizoensgroentjes | Quorn","Ravioli truffel | Verde groenten | Champignonsaus","Noedels | Wokgroentjes | Curry","Spicy chili sin carne"] },
+      { temp:"warm", soort:"Vegan", items:["Curry kokos | Jasmijnrijst | Tuinkruiden","Tortellini | Tuinbonen | Courgette | Sweet paprika"] },
+    ],
+    vlees: [ { soort:"Vlees", items:["Entrecote","Chateaubriand","Filet pur","Kalfslende","Parelhoenfilet","Eendenborst","Pluma","Varkenshaasje","Hertenkalffilet (seizoen)","Hertenstoofpotje (seizoen)","Lamsfilet","Lamskroontje"] } ],
+    saus: [ { soort:"Saus", items:["Bearnaise","Pepersaus","Champignonsaus","Choronsaus","Vleesjus","Echalote","Rozemarijn","Graanmosterd","Fine Champagne","Truffeljus","Blackwell"] } ],
+    side: [ { soort:"Aardappel of pasta", items:["Gepofte aardappel","Violetta-aardappel","Rösti","Aardappelkroketjes","Sint-Anna-aardappel","Zoete-aardappelfrietjes","Polentakroket","Hasselback-aardappel","Gnocchi","Pommes Pont-Neuf","Amandelkroketjes","Gratin dauphinois","Verse frietjes","Krielaardappeltjes","Opgevulde aardappel","Gekonfijte aardappel"] } ],
+    vis: [ { soort:"Vis", uitleg:"Enkel verse vis: de vissoort hangt af van het aanbod, de kwaliteit en de marktprijs.", items:["Heilbot | Wortel | Spitskool | Pommes Anna | Garnaalbisque","Dorade | Geroosterde aardappeltjes | Verde groentjes | Dragon","Kabeljauwhaasje | Structuren van wortel | Ratte du Touquet","Zalmfilet | Ravioli van citroengras | Bearnaise | Prei","Kabeljauw | Mousseline | Krokante groentjes | Bieslook","Roggevleugel | Erwten | Tuinbonen | Beukenzwam | Aardappel | Kappertjes"] } ],
+    veggie: [
+      { soort:"Vegetarisch", items:["Risotto | Champignons | Truffel","Asperge à la flamande","Fregola | Courgette | Kappertjes","Butternut | Geitenkaas | Walnoot"] },
+      { soort:"Vegan", items:["Risotto | Paprika | Tomaat | Avocado","Ratatouille | Linzen | Aubergine | Aardappel"] },
+    ],
+    dessert: [
+      { soort:"Op bord", items:["Citroentaartje | Aardbei | Crumble cuberdon | Basilicumolie","Mille framboise | Karamelcrunch | Meringue | Crémeux framboos","Biscuit pistache | Ganache vanille | Pompelmoes | Witte chocolademousse","Huisgemaakte brownie | Karamelsaus | Quenelle van vanille | Crumble","Krokant van yuzu | Chocoladebiscuit | Crémeux passievrucht | Munt"] },
+      { soort:"Simpel & lekker", items:["Citroentaart | Aardbei | Cuberdon","Brownie | Vanille | Karamel","Tiramisu | Speculoos","Panna cotta | Seizoensfruit","Duo van chocolademousse"] },
+      { soort:"Buffet", items:["Buffet Ma Kwizien | Keuze uit chocolademousse, speculoosmousse, flensjes met chocoladesaus, donut wall, mini-magnums, brownie, fruitsalade, cupcakes, bokkenpootjes, florentines, tartines russes, petitfours …","Buffet Royal | Keuze uit fruitsalade, crème brûlée, chocolademousse, tiramisu, soezentoren, flensjes met chocolade, roomijs, donut wall, mini-tompoes, mini-éclair, brownie, bosvruchtentaart, advocaattaart, chocoladetaart, speculoosmousse, mini-zandgebakjes, mini-gebakjes …","Walking dinner | Keuze uit crème brûlée, macarons, panna cotta met coulis, tiramisu, speculoosmousse, brownie, duo van chocolademousse, seizoensfruit, mini-donuts, roomrijst, ijstruffels, mini-éclairs, boules de Berlin"] },
+    ],
+    extra: [
+      { soort:"Tablesnacks (in de offerte)", items:["Nacho's | Tomatensalsa | Guacamole | Cheddar | Zure room | Pijpajuin","Crackers | Twee huisgemaakte seizoensdips","Koolrabi | Bloemkool | Radijs | Honingtomaat | Thaise dip","Charcuterie | Lomo | Pancetta | Ganda | Chorizo"] },
+      { soort:"Mag het iets meer zijn?", items:["Oesterman | Vishandel Lotte","Cortador | Joka","Tataki | Lobsterfish"] },
+      { soort:"Zoete afsluiter receptie", items:["Pimped mini-Magnum","Luxe macaron","Huisgemaakte madeleine | Chocolade","Citroensorbet"] },
+      { soort:"Dessertsupplement", items:["Fraise à gogo","Tiramisubar","IJskraampje","Bruidstaart op maat"] },
+      { soort:"Late night snack", items:["Stuutje met gehakt | Verse ui | Mosterd","Julientje","Croque","Gepimpte burgers","Pizza","Frituursnacks"] },
+    ],
+  };
+  // Hoeveel er per gang gekozen moet worden (0 = vrij aantal).
+  const GANG = {
+    hapje:{ titel:"Hapjes", kies:6, verplicht:true }, voorgerecht:{ titel:"Voorgerecht", kies:1, verplicht:true },
+    vlees:{ titel:"Vlees", kies:1, verplicht:true }, saus:{ titel:"Saus bij het vlees", kies:1, verplicht:true }, side:{ titel:"Side bij het vlees", kies:1, verplicht:true },
+    vis:{ titel:"Vis", kies:1, verplicht:true }, veggie:{ titel:"Veggie", kies:1, verplicht:true },
+    dessert:{ titel:"Dessert", kies:1, verplicht:false }, extra:{ titel:"Extra's", kies:0, verplicht:false },
+  };
+  const FM = { temp:"alle", vtemp:"alle" };
+  const dishParts = s => String(s).split("|").map(x => x.trim()).filter(Boolean);
+  const dishText = s => dishParts(s).join(" · ");
+  const menuKey = (gang, g) => gang + "\u0001" + g;
+  function menuPicks(){
+    const seen = new Set(), by = {};
+    Object.keys(GANG).forEach(k => by[k] = []);
+    [...S.menu].sort((a,b) => (Number(a.created)||0) - (Number(b.created)||0)).forEach(m => {
+      const k = menuKey(m.gang, m.gerecht);
+      if(!by[m.gang] || seen.has(k)) return;
+      seen.add(k); by[m.gang].push(m);
+    });
+    return by;
+  }
+  const menuOpen = () => { const p = menuPicks(); return Object.keys(GANG).reduce((n, k) => n + (GANG[k].verplicht ? Math.max(0, GANG[k].kies - p[k].length) : 0), 0); };
+  function toggleDish(gang, gerecht, groep){
+    if(!S.canWrite) return;
+    if(db && db.has && !db.has("menu")){ toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren."); return; }
+    const picks = menuPicks()[gang], cfg = GANG[gang];
+    const same = S.menu.filter(m => m.gang === gang && m.gerecht === gerecht);
+    if(same.length){ same.forEach(m => remove("menu", m.id)); return; }
+    if(cfg.kies === 1) S.menu.filter(m => m.gang === gang).forEach(m => remove("menu", m.id));
+    else if(cfg.kies > 1 && picks.length >= cfg.kies){ toast(`Je koos al ${cfg.kies} ${cfg.titel.toLowerCase()}. Haal er eerst één weg.`); return; }
+    add("menu", { gang, gerecht, groep: groep || "" });
+  }
+  function menuText(){
+    const p = menuPicks(), list = k => p[k].map(m => dishText(m.gerecht));
+    const one = k => p[k][0] ? dishText(p[k][0].gerecht) : "nog te kiezen";
+    const lines = ["Menu Florence & Louis · 10 juli 2027", ""];
+    lines.push(`Hapjes (${p.hapje.length}/6):`); list("hapje").forEach(x => lines.push("- " + x));
+    lines.push("", "Voorgerecht: " + one("voorgerecht"), "", "Hoofdgerecht:");
+    lines.push(`- Vlees: ${one("vlees")}${p.saus[0] ? ", saus " + dishText(p.saus[0].gerecht).toLowerCase() : ""}${p.side[0] ? ", " + dishText(p.side[0].gerecht).toLowerCase() : ""}`);
+    lines.push("- Vis: " + one("vis"), "- Veggie: " + one("veggie"), "- Groenten: zomergroentjes van het seizoen");
+    if(p.dessert[0]) lines.push("", "Dessert: " + one("dessert"));
+    if(p.extra.length){ lines.push("", "Extra's:"); list("extra").forEach(x => lines.push("- " + x)); }
+    const opm = String(S.settings.menu_opmerking || "").trim();
+    if(opm) lines.push("", "Opmerking: " + opm);
+    return lines.join("\n");
+  }
+  function viewMenu(){
+    const p = menuPicks(), notReady = db && db.has && !db.has("menu");
+    const chosen = new Set(S.menu.map(m => menuKey(m.gang, m.gerecht)));
+    const dish = (gang, s, groep) => {
+      const on = chosen.has(menuKey(gang, s)), parts = dishParts(s), full = GANG[gang].kies > 1 && p[gang].length >= GANG[gang].kies && !on;
+      return `<button class="dish${on ? " on" : ""}${full ? " full" : ""}" data-dish="${esc(gang)}" data-gerecht="${esc(s)}" data-groep="${esc(groep)}" aria-pressed="${on}"${dis()}>
+        <span class="dish-tick" aria-hidden="true">${on ? "✓" : ""}</span><span class="dish-txt"><b>${esc(parts[0])}</b>${parts.length > 1 ? `<small>${esc(parts.slice(1).join(" · "))}</small>` : ""}</span></button>`;
+    };
+    const groups = (gang, filter) => MENU_KAART[gang].filter(g => !filter || filter === "alle" || g.temp === filter).map(g => {
+      const groep = (g.temp && g.temp !== "exquis" ? (g.temp === "koud" ? "Koud · " : "Warm · ") : "") + g.soort;
+      return `<div class="dgroup"><h4>${esc(groep)}</h4>${g.uitleg ? `<p class="meta">${esc(g.uitleg)}</p>` : ""}<div class="dgrid">${g.items.map(s => dish(gang, s, groep)).join("")}</div></div>`;
+    }).join("");
+    const count = k => { const c = GANG[k], n = p[k].length; return c.kies ? `<span class="mcount${n >= c.kies ? " ok" : ""}">${n} / ${c.kies}</span>` : (n ? `<span class="mcount">${n}</span>` : ""); };
+    const tchip = (key, v, l) => `<button class="chip-btn" data-mtemp="${key}:${v}" aria-pressed="${FM[key] === v}">${l}</button>`;
+    const sec = (id, k, intro, body, chips) => `<section class="msec" id="m-${id}"><div class="msec-head"><h3>${esc(GANG[k].titel)}</h3>${count(k)}</div>${intro ? `<p class="meta">${intro}</p>` : ""}${chips ? `<div class="chips">${chips}</div>` : ""}${body}</section>`;
+    const sum = (label, k, extra) => {
+      const items = p[k];
+      return `<div class="mline${GANG[k].verplicht && items.length < GANG[k].kies ? " todo" : ""}"><span class="ml">${label}</span><span class="mv">${items.length ? items.map(m => `<span>${esc(dishText(m.gerecht))}</span>`).join("") : `<em>${GANG[k].verplicht ? "nog te kiezen" : "—"}</em>`}${extra || ""}</span></div>`;
+    };
+    const open = menuOpen();
+    const summary = `<aside class="msum">
+        <div class="msec-head"><h3>Ons menu</h3><span class="mcount${open ? "" : " ok"}">${open ? `nog ${open} te kiezen` : "compleet"}</span></div>
+        ${sum(`Hapjes ${p.hapje.length}/6`, "hapje")}
+        ${sum("Voorgerecht", "voorgerecht")}
+        ${sum("Vlees", "vlees")}${sum("Saus", "saus")}${sum("Side", "side")}
+        ${sum("Vis", "vis")}${sum("Veggie", "veggie")}
+        <div class="mline"><span class="ml">Groenten</span><span class="mv"><span>Zomergroentjes van het seizoen</span></span></div>
+        ${sum("Dessert", "dessert")}
+        ${p.extra.length ? sum("Extra's", "extra") : ""}
+        <label class="mnote">Opmerking voor de cateraar<textarea class="auto" rows="2" data-setting="menu_opmerking" placeholder="bv. glutenvrije optie, kindermenu …"${dis()}>${esc(S.settings.menu_opmerking || "")}</textarea></label>
+        <button class="btn ghost" type="button" data-menu-copy>Kopieer menu als tekst</button>
+      </aside>`;
+    return `
+      <div class="panel-head"><h2>Menu</h2><span class="meta">Ma Kwizien · brochure 2026 · tik een gerecht aan om het te kiezen</span></div>
+      ${notReady ? `<div class="notice">Het script kent dit tabblad nog niet. Plak de nieuwste Code.gs en implementeer een nieuwe versie.</div>` : ""}
+      <div class="mlayout">
+        ${summary}
+        <div class="mmain">
+          ${sec("hapjes", "hapje", "Kies 6 hapjes voor de receptie, koud of warm.", groups("hapje", FM.temp), tchip("temp", "alle", "Alle") + tchip("temp", "koud", "Koud") + tchip("temp", "warm", "Warm") + tchip("temp", "exquis", "Exquis"))}
+          ${sec("voorgerecht", "voorgerecht", "Kies 1 voorgerecht, koud of warm.", groups("voorgerecht", FM.vtemp), tchip("vtemp", "alle", "Alle") + tchip("vtemp", "koud", "Koud") + tchip("vtemp", "warm", "Warm"))}
+          <h3 class="mtitle">Hoofdgerecht</h3>
+          <p class="meta mtitle-sub">Kies 1 gerecht per soort: de gasten kiezen op de antwoordpagina tussen vlees, vis en vegetarisch. Bij het vlees kies je ook een saus en een side. De groenten zijn seizoensgebonden; in juli zijn dat zomergroentjes (mangetouts, courgette, bloemkool, champignons …).</p>
+          ${sec("vlees", "vlees", "", groups("vlees"))}
+          ${sec("saus", "saus", "", groups("saus"))}
+          ${sec("side", "side", "", groups("side"))}
+          ${sec("vis", "vis", "", groups("vis"))}
+          ${sec("veggie", "veggie", "Vegetarisch of vegan.", groups("veggie"))}
+          ${sec("dessert", "dessert", "Dessert en koffie zitten in de offerte. Kies 1.", groups("dessert"))}
+          ${sec("extra", "extra", "Optioneel, zoveel je wil. Enkel de tablesnacks zitten in de offerte; de rest is mogelijk een supplement.", groups("extra"))}
+        </div>
+      </div>`;
   }
 
   // ---------- vragen per leverancier ----------
@@ -1436,7 +1621,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function renderTab(){
     if(S.dbOk === null){ main.innerHTML = `<div class="empty">Gegevens laden…</div>`; return; }
     const t = currentTab();
-    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "opvolging" ? viewOrders() : t === "uitnodigingen" ? viewInvites() : viewInfo();
+    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "opvolging" ? viewOrders() : t === "menu" ? viewMenu() : t === "uitnodigingen" ? viewInvites() : viewInfo();
     const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
     if(form && head) head.after(form);
     const lb = main.querySelector(".lockbar"); if(lb && head) head.after(lb);
@@ -1590,6 +1775,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   });
   main.addEventListener("click", e => {
     const bb = e.target.closest("[data-bbasis]"); if(bb){ BG.basis = bb.dataset.bbasis; renderTab(); return; }
+    const dsh = e.target.closest("[data-dish]"); if(dsh){ toggleDish(dsh.dataset.dish, dsh.dataset.gerecht, dsh.dataset.groep); return; }
+    const mt = e.target.closest("[data-mtemp]"); if(mt){ const [k, v] = mt.dataset.mtemp.split(":"); FM[k] = v; renderTab(); return; }
+    if(e.target.closest("[data-menu-copy]")){ const txt = menuText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Menu gekopieerd. Plak het in een mail aan de cateraar."), () => { window.prompt("Kopieer het menu:", txt); }); return; }
     const ov = e.target.closest("[data-oview]"); if(ov){ FO.view = ov.dataset.oview; renderTab(); return; }
     const qv = e.target.closest("[data-qview]"); if(qv){ FQ.view = qv.dataset.qview; renderTab(); return; }
     if(e.target.closest("[data-ov-edit]")){ OV.edit = true; renderTab(); return; }
