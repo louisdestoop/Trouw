@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#7B1A50">
+<link rel="icon" type="image/png" href="../icons/favicon-64.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<title>Florence &amp; Louis · 10 juli 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Antwoordpagina voor gasten: één smalle kolom zoals een uitnodigingskaart, in het palet van Florence & Louis. */
+:root{
+  --bg:#F3E9E1; --card:#FFFAF6; --ink:#2B1320; --muted:#7A5E6B; --line:#E5D4CA;
+  --plum:#7B1A50; --rasp:#B83970; --blush:#F1A9CB; --blush-soft:#F9E3EE; --ok:#2F855A; --warn:#B0412A;
+  --on-accent:#FFFAF6;
+  --display:"Bodoni Moda", "Didot", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1B0E15; --card:#25141E; --ink:#F3E9E1; --muted:#BFA3B0; --line:#3C2632; --plum:#F1A9CB; --rasp:#E788B0; --blush-soft:#3A1B2C; --ok:#7CC69A; --warn:#EE9378; --on-accent:#1B0E15; color-scheme:dark; }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding:32px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px))}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rasp);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;padding-bottom:6px}
+.eyebrow{margin:0;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--rasp);font-weight:600}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,11vw,60px);line-height:1.05;color:var(--plum)}
+h1 i{color:var(--rasp)}
+.place{margin:0;color:var(--muted);font-size:14px}
+.rule{width:56px;height:1px;background:var(--blush);margin:8px auto 0;border:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px}
+.intro{display:flex;flex-direction:column;gap:12px;text-align:center}
+.intro p{margin:0}
+.prog{font-family:var(--display);font-size:19px;color:var(--plum);white-space:pre-line;line-height:1.5}
+.small{font-size:14px;color:var(--muted)}
+.deadline{font-weight:600;color:var(--rasp);font-size:14px}
+h2{margin:0;font-family:var(--display);font-weight:400;font-size:26px;color:var(--plum);text-align:center}
+.guest{display:flex;flex-direction:column;gap:14px}
+.guest h3{margin:0;font-size:18px;font-weight:600}
+.guest .hint{margin:-8px 0 0;font-size:14px;color:var(--muted)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;cursor:pointer;font-weight:600;color:var(--ink);min-height:46px}
+.opt[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:var(--on-accent)}
+.opt.no[aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.row3 .opt{font-weight:500;font-size:14.5px;padding:10px 6px}
+fieldset{border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+legend{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;padding:0}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+input[type=text],textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;font-weight:400;font-size:16px;color:var(--ink);width:100%}
+textarea{resize:vertical;min-height:90px}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.err{color:var(--warn);font-size:14px;font-weight:600;margin:0}
+.submit{border:none;border-radius:12px;padding:15px 18px;background:var(--plum);color:var(--on-accent);font-weight:600;font-size:17px;cursor:pointer;width:100%}
+.submit:disabled{opacity:.6;cursor:default}
+.center{text-align:center}
+.summary{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:left}
+.summary li{padding:8px 0;border-top:1px dotted var(--line)}
+.linkish{border:none;background:none;color:var(--rasp);text-decoration:underline;cursor:pointer;padding:6px;font-weight:600}
+.codeform{display:flex;gap:8px}
+.codeform input{text-transform:uppercase;letter-spacing:.15em;text-align:center}
+.codeform button{border:none;border-radius:10px;background:var(--plum);color:var(--on-accent);font-weight:600;padding:0 18px;cursor:pointer}
+footer{text-align:center;font-size:13px;color:var(--muted)}
+@media (max-width:380px){ .row3{grid-template-columns:1fr} .names{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Zaterdag 10 juli 2027</p>
+    <h1>Florence <i>&amp;</i> Louis</h1>
+    <p class="place" id="place">Rotsaert Green Venue · Wortegem-Petegem</p>
+    <hr class="rule">
+  </header>
+
+  <div id="loading" class="card center small">Even geduld, we zoeken je uitnodiging…</div>
+
+  <form id="codeform" class="card intro" hidden>
+    <p>Scan de QR-code op je uitnodiging, of vul hieronder de code in die erbij staat.</p>
+    <div class="codeform"><input id="code-in" type="text" inputmode="text" autocomplete="off" maxlength="12" aria-label="Code van je uitnodiging" required><button type="submit">Verder</button></div>
+    <p id="code-err" class="err" role="alert"></p>
+  </form>
+
+  <section id="intro" class="card intro" hidden></section>
+  <form id="form" novalidate hidden></form>
+  <section id="thanks" class="card intro" hidden></section>
+
+  <footer>Vragen? Neem gerust contact op met Florence of Louis.</footer>
+</div>
+
+<script src="../config.js"></script>
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const api = () => (window.TP_CONFIG && window.TP_CONFIG.apiUrl) || "";
+  const post = body => fetch(api(), { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body), redirect: "follow" }).then(r => r.json());
+  const MOMENTS = [["ceremonie", "Ceremonie"], ["receptie", "Receptie"], ["diner", "Diner & feest"]];
+  const DISHES = [["vlees", "Vlees"], ["vis", "Vis"], ["vegetarisch", "Vegetarisch"]];
+  let code = "", data = null, answers = [];
+
+  function show(id){ ["loading", "codeform", "intro", "form", "thanks"].forEach(x => { $(x).hidden = !(Array.isArray(id) ? id.includes(x) : x === id); }); }
+  function fmtDate(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ""); if(!m) return "";
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" });
+  }
+  const fullName = m => [m.voornaam, m.achternaam].filter(Boolean).join(" ");
+  const plusOwner = m => String(m.voornaam || "").replace(/^\+1 van\s*/i, "");
+
+  function getCode(){
+    const p = new URLSearchParams(location.search);
+    return (p.get("c") || location.hash.replace(/^#/, "") || "").trim().toUpperCase();
+  }
+
+  async function open(c){
+    code = c; show("loading");
+    if(!/^https:\/\/script\.google\.com\//.test(api())){ $("loading").textContent = "Deze pagina is nog niet helemaal klaar. Probeer het later opnieuw."; return; }
+    let res;
+    try{ res = await post({ action: "rsvpGet", code: c }); }
+    catch(_){ $("loading").textContent = "We konden je uitnodiging niet laden. Controleer je internetverbinding en probeer opnieuw."; return; }
+    if(!res.ok){ show("codeform"); $("code-err").textContent = c ? "We vonden geen uitnodiging met deze code. Kijk ze even na." : ""; return; }
+    data = res;
+    answers = res.members.map(m => {
+      const st = m.status === "ja" || m.status === "nee" ? m.status : "";
+      const dflt = k => (m[k] === null || m[k] === undefined) ? !(k === "diner" && m.kind) : !!m[k];
+      return { id: m.id, optioneel: m.optioneel, kind: m.kind, status: st,
+        ceremonie: dflt("ceremonie"), receptie: dflt("receptie"), diner: m.kind ? false : dflt("diner"),
+        hoofdgerecht: m.hoofdgerecht || "", dieet: m.dieet || "",
+        voornaam: m.optioneel && !/^\+1 van/i.test(m.voornaam || "") ? m.voornaam : "",
+        achternaam: m.optioneel && !/^\+1 van/i.test(m.voornaam || "") ? m.achternaam : "" };
+    });
+    renderIntro(); renderForm();
+    show(["intro", "form"]);
+  }
+
+  function renderIntro(){
+    const s = data.settings;
+    if(s.rsvp_locatie) $("place").textContent = s.rsvp_locatie;
+    $("intro").innerHTML = `
+      ${s.rsvp_welkom ? `<p>${esc(s.rsvp_welkom)}</p>` : ""}
+      ${s.rsvp_programma ? `<div class="prog">${esc(s.rsvp_programma)}</div>` : ""}
+      ${s.rsvp_dresscode ? `<p class="small">Dresscode: ${esc(s.rsvp_dresscode)}</p>` : ""}
+      ${s.rsvp_extra ? `<p class="small" style="white-space:pre-line">${esc(s.rsvp_extra)}</p>` : ""}
+      ${data.locked ? `<p class="deadline">De antwoordtermijn is voorbij. Wil je nog iets wijzigen? Neem dan contact op met Florence of Louis.</p>`
+        : s.rsvp_deadline ? `<p class="deadline">Graag antwoorden vóór ${esc(fmtDate(s.rsvp_deadline))}</p>` : ""}`;
+  }
+
+  function memberHtml(m, i){
+    const src = data.members[i], dis = data.locked ? " disabled" : "";
+    const title = m.optioneel ? "Breng je iemand mee?" : esc(fullName(src));
+    const yes = m.optioneel ? "Ja" : "Komt graag", no = m.optioneel ? "Nee" : "Kan helaas niet";
+    const btn = (k, v, l, cls) => `<button type="button" class="opt${cls ? " " + cls : ""}" data-i="${i}" data-k="${k}" data-v="${v}" aria-pressed="${String(m[k]) === String(v)}"${dis}>${l}</button>`;
+    let det = "";
+    if(m.status === "ja"){
+      const moments = MOMENTS.filter(([k]) => !(k === "diner" && m.kind));
+      det = `
+        ${m.optioneel ? `<div class="names">
+          <label class="field">Voornaam<input type="text" data-i="${i}" data-f="voornaam" value="${esc(m.voornaam)}" autocomplete="off"${dis}></label>
+          <label class="field">Achternaam<input type="text" data-i="${i}" data-f="achternaam" value="${esc(m.achternaam)}" autocomplete="off"${dis}></label></div>` : ""}
+        <fieldset><legend>Aanwezig op</legend><div class="row3">${moments.map(([k, l]) => `<button type="button" class="opt" data-i="${i}" data-toggle="${k}" aria-pressed="${!!m[k]}"${dis}>${l}</button>`).join("")}</div></fieldset>
+        ${m.kind ? `<p class="hint">Kinderen zijn welkom op de ceremonie en de receptie.</p>` : ""}
+        ${m.diner && !m.kind ? `<fieldset><legend>Hoofdgerecht</legend><div class="row3">${DISHES.map(([v, l]) => btn("hoofdgerecht", v, l)).join("")}</div></fieldset>` : ""}
+        <label class="field">Allergieën of dieetwensen<input type="text" data-i="${i}" data-f="dieet" value="${esc(m.dieet)}" placeholder="Niets? Laat leeg." autocomplete="off"${dis}></label>`;
+    }
+    return `<section class="card guest">
+      <h3>${title}</h3>
+      ${m.optioneel ? `<p class="hint">${esc(plusOwner(src))} mag iemand meebrengen.</p>` : ""}
+      <div class="choice">${btn("status", "ja", yes)}${btn("status", "nee", no, "no")}</div>
+      ${det}
+    </section>`;
+  }
+
+  function renderForm(){
+    const h = data.household;
+    $("form").innerHTML = `<div style="display:flex;flex-direction:column;gap:14px">
+      <h2>${esc(h.naam.replace(/\s*\(\+1\)$/, ""))}</h2>
+      ${h.beantwoord && !data.locked ? `<p class="center small">Je antwoordde al. Je kan je antwoord hieronder nog aanpassen.</p>` : ""}
+      ${answers.map(memberHtml).join("")}
+      <section class="card"><label class="field">Een berichtje voor Florence & Louis (optioneel)<textarea id="msg" maxlength="1000"${data.locked ? " disabled" : ""}>${esc(h.bericht)}</textarea></label></section>
+      <p id="form-err" class="err" role="alert"></p>
+      ${data.locked ? "" : `<button class="submit" type="submit">Antwoord versturen</button>`}
+    </div>`;
+  }
+
+  function validate(){
+    for(let i = 0; i < answers.length; i++){
+      const m = answers[i], name = m.optioneel ? "je eventuele gezelschap" : fullName(data.members[i]);
+      if(!m.status) return `Laat ons nog weten of ${m.optioneel ? "je iemand meebrengt" : name + " komt"}.`;
+      if(m.status === "ja"){
+        if(m.optioneel && !m.voornaam.trim()) return "Vul de voornaam in van wie je meebrengt.";
+        if(!m.ceremonie && !m.receptie && !m.diner) return `Kies minstens één moment voor ${m.optioneel ? (m.voornaam || "je gezelschap") : name}.`;
+        if(m.diner && !m.kind && !m.hoofdgerecht) return `Kies nog een hoofdgerecht voor ${m.optioneel ? (m.voornaam || "je gezelschap") : name}.`;
+      }
+    }
+    return "";
+  }
+
+  $("form").addEventListener("click", e => {
+    const b = e.target.closest("button[data-i]"); if(!b || data.locked) return;
+    const m = answers[+b.dataset.i];
+    if(b.dataset.toggle){ m[b.dataset.toggle] = !m[b.dataset.toggle]; if(b.dataset.toggle === "diner" && !m.diner) m.hoofdgerecht = ""; }
+    else m[b.dataset.k] = b.dataset.v;
+    const y = window.scrollY; renderForm(); window.scrollTo(0, y);
+    $("form-err").textContent = "";
+  });
+  $("form").addEventListener("input", e => {
+    const t = e.target; if(t.dataset.f){ answers[+t.dataset.i][t.dataset.f] = t.value; }
+    if(t.id === "msg") data.household.bericht = t.value;
+  });
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const err = validate(); if(err){ $("form-err").textContent = err; return; }
+    const btn = $("form").querySelector(".submit"); btn.disabled = true; btn.textContent = "Bezig met versturen…";
+    let res;
+    try{ res = await post({ action: "rsvpSubmit", code, bericht: ($("msg").value || "").trim(), members: answers.map(m => ({
+      id: m.id, status: m.status, ceremonie: m.ceremonie, receptie: m.receptie, diner: m.diner, hoofdgerecht: m.hoofdgerecht,
+      dieet: m.dieet.trim(), voornaam: m.voornaam.trim(), achternaam: m.achternaam.trim() })) }); }
+    catch(_){ res = { ok: false, error: "network" }; }
+    btn.disabled = false; btn.textContent = "Antwoord versturen";
+    if(!res.ok){
+      $("form-err").textContent = res.error === "locked" ? "De antwoordtermijn is voorbij. Neem contact op met Florence of Louis." : "Versturen lukte niet. Controleer je internetverbinding en probeer opnieuw.";
+      return;
+    }
+    thanks();
+  });
+
+  function thanks(){
+    const coming = answers.filter(m => m.status === "ja");
+    const line = (m, i) => {
+      const n = m.optioneel ? [m.voornaam, m.achternaam].filter(Boolean).join(" ") || "Gezelschap" : fullName(data.members[i]);
+      if(m.optioneel && m.status !== "ja") return "";
+      if(m.status !== "ja") return `<li><b>${esc(n)}</b> · komt niet</li>`;
+      const mo = MOMENTS.filter(([k]) => m[k]).map(([, l]) => l.toLowerCase()).join(", ");
+      return `<li><b>${esc(n)}</b> · ${esc(mo)}${m.diner && m.hoofdgerecht ? ` · ${esc(m.hoofdgerecht)}` : ""}${m.dieet.trim() ? ` · ${esc(m.dieet.trim())}` : ""}</li>`;
+    };
+    $("thanks").innerHTML = `
+      <h2>${coming.length ? "Dank je wel!" : "Jammer, maar bedankt om het te laten weten"}</h2>
+      <p>${coming.length ? "We kijken ernaar uit om samen te feesten." : "We denken aan jullie op 10 juli."}</p>
+      <ul class="summary">${answers.map(line).join("")}</ul>
+      <p class="small">Toch iets wijzigen? Dat kan via dezelfde QR-code${data.settings.rsvp_deadline ? ` tot ${esc(fmtDate(data.settings.rsvp_deadline))}` : ""}.</p>
+      <button type="button" class="linkish" id="again">Antwoord aanpassen</button>`;
+    show("thanks"); window.scrollTo(0, 0);
+    $("again").addEventListener("click", () => { data.household.beantwoord = true; data.household.bericht = ($("msg") && $("msg").value) || data.household.bericht; renderForm(); show(["intro", "form"]); });
+  }
+
+  $("codeform").addEventListener("submit", e => {
+    e.preventDefault();
+    const c = $("code-in").value.trim().toUpperCase(); if(!c) return;
+    history.replaceState(null, "", "?c=" + encodeURIComponent(c));
+    open(c);
+  });
+
+  const c0 = getCode();
+  if(c0) open(c0); else { show("codeform"); }
+})();
+</script>
+</body>
+</html>

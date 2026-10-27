@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#7B1A50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Onze trouw">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<title>Trouwplanner Louis &amp; Florence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: één kolom (max 1080px). Kop met namen en aftelling, overzichtsstrook, dan vijf tabbladen. Palet: het kleurenpalet van Florence & Louis (plum, raspberry, blush, warm ivory). */
+:root{
+  --bg:#F3E9E1; --surface:#FFFAF6; --ink:#2B1320; --muted:#7A5E6B; --line:#E5D4CA;
+  --plum:#7B1A50; --rasp:#B83970; --blush:#F1A9CB; --blush-soft:#F9E3EE;
+  --ok:#2C6E4A; --ok-soft:#E1EFE6; --warn:#B0412A; --warn-soft:#F7E2DA; --gold:#8E6A1E; --gold-soft:#F3E8CF;
+  --on-accent:#FFFAF6;
+  --seat-ok:#2F855A; --seat-ok-ink:#FFFFFF; --seat-wait:#E0892B; --seat-wait-ink:#2B1320;
+  --seat-free:#F6D6D2; --seat-free-ink:#A3302A; --seat-free-line:#E3A39B; --table:#EADBCF;
+  --display:"Bodoni Moda", "Didot", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B0E15; --surface:#25141E; --ink:#F3E9E1; --muted:#BFA3B0; --line:#3C2632;
+    --plum:#F1A9CB; --rasp:#E788B0; --blush:#F1A9CB; --blush-soft:#3A1B2C;
+    --ok:#7CC69A; --ok-soft:#183020; --warn:#EE9378; --warn-soft:#3B1E18; --gold:#DDB665; --gold-soft:#33291A;
+    --on-accent:#1B0E15; color-scheme:dark;
+    --seat-ok:#3E9B69; --seat-ok-ink:#F3FFF7; --seat-wait:#E39A45; --seat-wait-ink:#1B0E15;
+    --seat-free:#4A2321; --seat-free-ink:#F2A79F; --seat-free-line:#7A3A35; --table:#3A2630;
+  }
+}
+:root[data-theme="dark"]{
+  --seat-ok:#3E9B69; --seat-ok-ink:#F3FFF7; --seat-wait:#E39A45; --seat-wait-ink:#1B0E15;
+  --seat-free:#4A2321; --seat-free-ink:#F2A79F; --seat-free-line:#7A3A35; --table:#3A2630;
+  --bg:#1B0E15; --surface:#25141E; --ink:#F3E9E1; --muted:#BFA3B0; --line:#3C2632;
+  --plum:#F1A9CB; --rasp:#E788B0; --blush:#F1A9CB; --blush-soft:#3A1B2C;
+  --ok:#7CC69A; --ok-soft:#183020; --warn:#EE9378; --warn-soft:#3B1E18; --gold:#DDB665; --gold-soft:#33291A;
+  --on-accent:#1B0E15; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:24px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rasp);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.eyebrow{margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rasp);font-weight:600}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(34px,6.4vw,58px);line-height:1.04;display:flex;flex-wrap:wrap;align-items:baseline;gap:.22em;color:var(--plum)}
+h1 .amp{font-style:italic;color:var(--rasp)}
+.name-input{font-family:var(--display);font-size:inherit;line-height:inherit;color:var(--plum);border:none;border-bottom:1px dashed transparent;background:transparent;width:6.2em;max-width:100%;padding:0}
+.name-input:hover,.name-input:focus{border-bottom-color:var(--rasp);outline:none}
+.venue{margin:6px 0 0;color:var(--muted);font-size:14px}
+.countdown{text-align:right}
+.countdown .big{font-family:var(--display);font-size:clamp(42px,7vw,66px);line-height:1;font-variant-numeric:tabular-nums;color:var(--plum)}
+.countdown .sub{color:var(--muted);font-size:13px}
+
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat .label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat .value{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .value small{font-size:14px;font-weight:500;color:var(--muted)}
+.stat .foot{font-size:13px;color:var(--muted)}
+.stat .foot b{color:var(--warn);font-weight:600}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--rasp);border-radius:3px;transition:width .3s}
+.bar.over span{background:var(--warn)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-current="page"]{color:var(--plum);border-bottom-color:var(--rasp)}
+.tabs .n{font-weight:500;font-size:12px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+
+main{display:flex;flex-direction:column;gap:16px;min-height:200px}
+.panel-head{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.panel-head h2{margin:0;font-family:var(--display);font-weight:400;font-size:28px;color:var(--plum)}
+.meta{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+
+.add{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;background:var(--blush-soft);border-radius:var(--radius);padding:12px}
+.add label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.add label.grow{flex:1 1 180px}
+.add input,.add select{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-width:0;width:100%}
+.btn{border:none;border-radius:7px;padding:9px 16px;background:var(--plum);color:var(--on-accent);font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:default}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.search{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;min-width:0;flex:1 1 200px;max-width:320px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip-btn[aria-pressed="true"]{background:var(--plum);color:var(--on-accent);border-color:var(--plum)}
+.sep{width:1px;height:22px;background:var(--line)}
+
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%}
+.guests table{min-width:990px}.budget table{min-width:760px}
+th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 6px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
+td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tfoot td{font-weight:600;padding:10px 8px;border-top:1px solid var(--line);border-bottom:none;font-variant-numeric:tabular-nums}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.c{text-align:center}
+.cell{width:100%;border:1px solid transparent;border-radius:6px;background:transparent;padding:5px 6px;min-width:0}
+.cell:hover{border-color:var(--line)}
+.cell:focus{border-color:var(--rasp);background:var(--bg);outline:none}
+input.cell.num{text-align:right}
+select.cell{cursor:pointer}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--rasp);cursor:pointer;vertical-align:middle}
+.crd{display:flex;gap:4px;justify-content:center}
+.crd label{position:relative;cursor:pointer}
+.crd input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.crd span{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);transition:background .15s,color .15s}
+.crd input:checked + span{background:var(--rasp);border-color:var(--rasp);color:var(--on-accent)}
+.crd input:focus-visible + span{outline:2px solid var(--rasp);outline-offset:2px}
+.crd input:disabled + span{opacity:.5;cursor:default}
+select.via{width:auto;font-weight:600;color:var(--plum)}
+.nr{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.w-money{width:120px}
+select.status[data-v="ja"]{color:var(--ok);font-weight:600}
+select.status[data-v="nee"]{color:var(--warn)}
+select.status[data-v="open"]{color:var(--muted)}
+tr.declined td{opacity:.6}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;display:inline-block}
+.tag.opt{background:var(--gold-soft);color:var(--gold)}
+.tag.late{background:var(--warn-soft);color:var(--warn)}
+.tag.soon{background:var(--gold-soft);color:var(--gold)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.quiet{color:var(--muted);font-weight:500;padding-inline:0}
+.tag.urgent{background:var(--warn);color:var(--on-accent)}
+.tag.hoog{background:var(--blush-soft);color:var(--rasp)}
+.tag.middel{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.handle{border:none;background:transparent;color:var(--muted);cursor:grab;padding:6px 6px;border-radius:6px;font-size:15px;line-height:1;letter-spacing:-2px;touch-action:none;user-select:none;-webkit-user-select:none}
+.handle:hover{color:var(--rasp);background:var(--blush-soft)}
+.handle:disabled{opacity:.35;cursor:default}
+tr.dragging td{background:var(--blush-soft)}
+tr.dragging .handle{cursor:grabbing;color:var(--rasp)}
+body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
+.del{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:5px 8px;border-radius:6px;font-size:13px;white-space:nowrap}
+.del:hover{color:var(--warn);background:var(--warn-soft)}
+.del.armed{color:var(--on-accent);background:var(--warn)}
+
+/* Overzicht */
+.info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.info-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.info-card h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:20px;color:var(--plum)}
+.info-card.check{border-color:var(--rasp);background:var(--blush-soft)}
+.info-card.check h3{color:var(--rasp)}
+.irow{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:start;padding:4px 0;border-top:1px dotted var(--line)}
+.irow:first-of-type{border-top:none}
+.irow .lbl{font-size:13px;font-weight:600;color:var(--muted);padding-top:6px}
+.irow textarea{resize:none;overflow:hidden;line-height:1.45}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0 2px}
+.swatch{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.swatch i{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:block}
+
+/* Taken */
+.tasks{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.task{display:grid;grid-template-columns:24px 26px minmax(0,1fr) 150px 112px 90px auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:none}
+.task .main{display:flex;flex-direction:column;min-width:0}
+.task .sub{font-size:12.5px;color:var(--muted);padding:0 7px 3px;display:flex;flex-wrap:wrap;gap:2px 10px}
+.task .sub .cat{color:var(--rasp);font-weight:600}
+.task.done .title{text-decoration:line-through;color:var(--muted)}
+.task .flags{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.task.dragging{background:var(--blush-soft)}
+.task .confirm{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--blush-soft);border-radius:8px;padding:8px 10px;font-size:14px}
+.task .confirm span{flex:1 1 200px;min-width:0}
+.group-h{padding:10px 12px 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);background:var(--bg)}
+@media (max-width:720px){
+  .task{grid-template-columns:24px 26px minmax(0,1fr) auto;grid-template-areas:"h c m d" ". . date who" ". . f f"}
+  .task>:nth-child(1){grid-area:h}.task>:nth-child(2){grid-area:c}.task>:nth-child(3){grid-area:m}.task>:nth-child(4){grid-area:date}
+  .task>:nth-child(5){grid-area:who}.task>:nth-child(6){grid-area:f;flex-direction:row}.task>:nth-child(7){grid-area:d}
+  .task .confirm{grid-area:auto;grid-column:1 / -1}
+}
+
+/* Tafels */
+.unplaced{border:1px dashed var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.unplaced h3,.table-card h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pills{display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow:auto}
+.pill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.table-card .row{display:flex;gap:8px;align-items:center}
+.table-card .tname{font-family:var(--display);font-size:20px;color:var(--plum)}
+.seats{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:13px;white-space:nowrap}
+.seats input{width:52px}
+.cap{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cap.over{color:var(--warn);font-weight:600}
+.seated{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.seated li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:3px 0;border-bottom:1px dotted var(--line)}
+.seated li:last-child{border-bottom:none}
+.seated .x{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:5px}
+.seated .x:hover{color:var(--warn);background:var(--warn-soft)}
+.table-card select{border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:var(--bg);width:100%}
+
+/* Tafelplan (bovenaanzicht) */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:28px;height:14px;border-radius:7px;margin-right:6px;vertical-align:-2px}
+.unplaced .pills .pill{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
+.unplaced .pills .pill:hover{border-color:var(--rasp)}
+.unplaced .pills .pill[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:var(--on-accent)}
+.plan{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;align-items:start}
+.tplan{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tplan .thead{display:flex;align-items:center;gap:6px}
+.tplan .tname{font-family:var(--display);font-size:20px;color:var(--plum)}
+.tgrid{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);grid-auto-rows:30px;gap:6px 8px}
+.tbl{grid-column:2;background:var(--table);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tbl span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+.seat{border:1px solid transparent;border-radius:15px;font:inherit;font-size:12.5px;font-weight:600;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;min-width:0;text-align:center}
+.seat.ok{background:var(--seat-ok);color:var(--seat-ok-ink)}
+.seat.wait{background:var(--seat-wait);color:var(--seat-wait-ink)}
+.seat.free{background:var(--seat-free);color:var(--seat-free-ink);border-color:var(--seat-free-line);font-weight:500}
+.seat:hover{filter:brightness(1.06)}
+.seat.sel{outline:3px solid var(--plum);outline-offset:2px}
+.counter{display:flex;align-items:center;justify-content:center;gap:16px}
+.counter button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;cursor:pointer;color:var(--plum)}
+.counter button:hover{border-color:var(--rasp)}
+.counter button:disabled{opacity:.5;cursor:default}
+.counter .cnt{text-align:center;line-height:1.1;min-width:60px}
+.counter .cnt b{display:block;font-size:24px;font-variant-numeric:tabular-nums;color:var(--plum)}
+.counter .cnt small{font-size:12px;color:var(--muted)}
+.tmeta{text-align:center;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100%);max-height:62vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-bottom:none;border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);z-index:15;display:flex;flex-direction:column;gap:10px;
+  padding:14px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h3{margin:0;font-family:var(--display);font-weight:400;font-size:20px;color:var(--plum)}
+.sheet p{margin:0}
+.sheet .acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn.ghost{background:transparent;color:var(--plum);border:1px solid var(--line)}
+.glist{display:flex;flex-direction:column;max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.glist button{font:inherit;text-align:left;border:none;border-bottom:1px solid var(--line);background:transparent;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;color:var(--ink)}
+.glist button:last-child{border-bottom:none}
+.glist button:hover{background:var(--blush-soft)}
+.glist small{color:var(--muted);white-space:nowrap}
+body.sheet-open{padding-bottom:62vh}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--radius)}
+.notice{background:var(--gold-soft);color:var(--ink);border-radius:var(--radius);padding:10px 14px;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:calc(100% - 32px);z-index:20}
+
+@media (max-width:760px){
+  .summary{grid-template-columns:1fr}
+  .info{grid-template-columns:1fr}
+  .countdown{text-align:left}
+  .irow{grid-template-columns:minmax(0,1fr) auto}
+  .irow .lbl{grid-column:1 / -1;padding-top:2px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Aanmelden */
+.login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:40;
+  padding:24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px))}
+.login-card{width:min(360px,100%);display:flex;flex-direction:column;gap:12px;text-align:center}
+.login-card h1{justify-content:center;font-size:44px}
+.login-card label{font-size:13px;color:var(--muted);font-weight:600;text-align:left}
+.login-card input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px;font-size:17px;text-align:center;letter-spacing:.08em}
+.login-card .btn{padding:12px}
+.sync{font-size:12px;color:var(--muted);margin-top:4px}
+.linkbtn{border:none;background:none;color:var(--rasp);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+/* Uitnodigingen */
+.inv-settings{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.inv-settings summary{cursor:pointer;font-weight:600;color:var(--plum)}
+.inv-settings .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin-top:12px}
+.inv-settings label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.inv-settings input,.inv-settings textarea{font-weight:400;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0;resize:vertical}
+.inv-stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.inv-stats b{color:var(--ink)}
+.invs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;align-items:start}
+.inv{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.inv-top{display:flex;gap:12px;align-items:flex-start}
+.inv-qr{width:84px;flex:0 0 84px;border-radius:6px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.inv-qr svg{display:block;width:100%;height:auto}
+.inv-main{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.inv-name{font-family:var(--display);font-size:19px;color:var(--plum);padding-left:0}
+.inv-link code{font-size:11.5px;color:var(--muted);word-break:break-all}
+.inv-acts{display:flex;flex-wrap:wrap;gap:6px}
+.inv-acts .chip-btn{text-decoration:none;font-size:12.5px}
+.inv-msg{margin:0;padding:8px 12px;background:var(--blush-soft);border-radius:8px;font-size:14px;white-space:pre-line}
+.inv-members{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.inv-members li{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dotted var(--line);font-size:14px}
+.inv-members .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inv-members .x{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:5px}
+.inv-members .x:hover{color:var(--warn);background:var(--warn-soft)}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:var(--line)}
+.dot.ja{background:var(--seat-ok)}.dot.nee{background:var(--warn)}
+.inv-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+@media (max-width:760px){ .inv-settings .grid{grid-template-columns:1fr} }
+/* App-gevoel: tabbladen blijven bovenaan staan */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:7}
+/* Compacte kop en overzicht op de iPhone */
+@media (max-width:760px){
+  body{padding-block:14px 48px}
+  .wrap{gap:16px}
+  .top{align-items:center;padding-bottom:12px}
+  .top h1{font-size:34px}
+  .venue{font-size:13px}
+  .countdown{text-align:left;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+  .countdown .big{font-size:30px}
+  .countdown .sync{width:100%;margin-top:0}
+  .countdown .sub{font-size:11px}
+  .summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat{padding:10px 10px;gap:4px}
+  .stat .label{font-size:10px;letter-spacing:.04em}
+  .stat .value{font-size:17px}
+  .stat .value small{display:block;font-size:11px}
+  .stat .foot{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="login" class="login" hidden>
+  <form id="login-form" class="login-card" autocomplete="on">
+    <p class="eyebrow">Zaterdag 10 juli 2027</p>
+    <h1>Louis <span class="amp">&amp;</span> Florence</h1>
+    <label for="pin">Toegangscode</label>
+    <input id="pin" name="pin" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Openen</button>
+    <p id="login-msg" class="meta" role="alert"></p>
+  </form>
+</div>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Zaterdag 10 juli 2027</p>
+      <h1>Louis <span class="amp">&amp;</span> <input id="partner-input" class="name-input" placeholder="partner" aria-label="Naam partner" autocomplete="off"></h1>
+      <p class="venue">Rotsaert Green Venue · Wortegem-Petegem</p>
+    </div>
+    <div class="countdown">
+      <div class="big" id="days">–</div>
+      <div class="sub" id="days-sub">dagen tot de grote dag</div>
+      <div class="sync"><span id="sync-state"></span> · <button id="logout" class="linkbtn" type="button">Afmelden</button></div>
+    </div>
+  </header>
+
+  <section class="summary" aria-label="Overzicht">
+    <div class="stat">
+      <span class="label">Gasten bevestigd</span>
+      <span class="value" id="s-guests">–</span>
+      <div class="bar" id="s-guests-bar"><span style="width:0"></span></div>
+      <span class="foot" id="s-guests-foot"></span>
+    </div>
+    <div class="stat">
+      <span class="label">Budget vastgelegd</span>
+      <span class="value" id="s-budget">–</span>
+      <div class="bar" id="s-budget-bar"><span style="width:0"></span></div>
+      <span class="foot" id="s-budget-foot"></span>
+    </div>
+    <div class="stat">
+      <span class="label">Taken gedaan</span>
+      <span class="value" id="s-tasks">–</span>
+      <div class="bar" id="s-tasks-bar"><span style="width:0"></span></div>
+      <span class="foot" id="s-tasks-foot"></span>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="Onderdelen">
+    <a href="#overzicht" data-tab="overzicht">Overzicht</a>
+    <a href="#gasten" data-tab="gasten">Gasten<span class="n" id="n-gasten"></span></a>
+    <a href="#budget" data-tab="budget">Budget<span class="n" id="n-budget"></span></a>
+    <a href="#taken" data-tab="taken">Taken<span class="n" id="n-taken"></span></a>
+    <a href="#tafels" data-tab="tafels">Tafelschikking<span class="n" id="n-tafels"></span></a>
+    <a href="#uitnodigingen" data-tab="uitnodigingen">Uitnodigingen<span class="n" id="n-uitn"></span></a>
+  </nav>
+
+  <div id="notice" class="notice" hidden></div>
+  <main id="main"><div class="empty">Gegevens laden…</div></main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="sheet" class="sheet" role="dialog" aria-label="Plaats aan tafel" hidden></div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/jszip.min.js" defer></script>
+<script>
+(function(){
+  const WEDDING = new Date(2027, 6, 10);
+  const TABS = ["overzicht","gasten","budget","taken","tafels","uitnodigingen"];
+  const COLS = ["guests","households","budget","tasks","tables","info"];
+  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], settings:{}, canWrite:true, dbOk:null };
+  const F = { q:"", via:"alle", status:"alle", burg:false, taskView:"open", taskCat:"" };
+  let db = null, pending = false;
+  const main = document.getElementById("main");
+  const RELATIES = ["Familie","Ouders","Vrienden","Collega","Kennis","Bruid","Bruidegom"];
+  const SECTION_ORDER = ["Burgerlijke trouw · 3 juli","Trouwfeest · 10 juli","Locatie","Na te kijken","Leveranciers","Getuigen","Familie","Catering (offerte V1, 11/02/2026)","Uitnodiging","Huisstijl"];
+
+  // ---------- helpers ----------
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const eur = n => new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0);
+  const eur2 = n => new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+  const moneyIn = n => (n ? String(n).replace(".", ",") : "");
+  const parseMoney = v => { const s = String(v).replace(/\s|€/g,""); const n = parseFloat(s.includes(",") ? s.replace(/\./g,"").replace(",", ".") : s); return isFinite(n) ? Math.round(n*100)/100 : 0; };
+  const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+  const daysUntil = iso => { if(!iso) return null; const [y,m,d] = iso.split("-").map(Number); return Math.round((new Date(y,m-1,d) - today())/864e5); };
+  const fmtMonth = iso => { if(!iso) return ""; const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("nl-BE",{day:"numeric",month:"short",year:"numeric"}); };
+  const partnerLabel = () => (S.settings.partner || "").trim() || "Partner";
+  const dis = () => S.canWrite ? "" : " disabled";
+  const currentTab = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : "overzicht"; };
+  const gname = g => [g.voornaam, g.achternaam].filter(Boolean).join(" ") || "Naamloos";
+  const sum = (arr, f) => arr.reduce((a, x) => a + (Number(f(x)) || 0), 0);
+  const isCounted = g => !g.optioneel && g.status !== "nee";
+
+  function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3600); }
+  function showNotice(msg){ const n = document.getElementById("notice"); n.textContent = msg; n.hidden = !msg; }
+  function handleErr(e){
+    const code = e && e.code;
+    if(code === "unauthorized") return; // de app vraagt de code opnieuw
+    if(code === "not_configured") toast(e.message);
+    else toast("Opslaan lukte niet. Controleer je internetverbinding; de gegevens worden opnieuw geladen.");
+    console.error(e);
+  }
+
+  // ---------- writes ----------
+  const chains = {};
+  function write(col, id, patch){
+    if(!db || !S.canWrite) return;
+    const key = col + "/" + id;
+    db.collection(col).doc(id).update(patch).catch(handleErr);
+  }
+  function add(col, data){ if(!db || !S.canWrite) return; return db.collection(col).add(Object.assign({}, data, { created: Date.now() })).catch(handleErr); }
+  function remove(col, id){ if(!db || !S.canWrite) return; return db.collection(col).doc(id).delete().catch(handleErr); }
+  function saveSettings(patch){
+    if(!db || !S.canWrite) return;
+    const next = Object.assign({}, S.settings, patch);
+    db.doc("meta/settings").set(patch).catch(handleErr);
+  }
+
+  // ---------- summary ----------
+  function setBar(id, pct, over){ const b = document.getElementById(id); b.firstElementChild.style.width = Math.max(0, Math.min(100, pct)) + "%"; b.classList.toggle("over", !!over); }
+  function renderSummary(){
+    const d = Math.round((WEDDING - today())/864e5);
+    document.getElementById("days").textContent = d > 0 ? d : (d === 0 ? "Vandaag!" : "✓");
+    document.getElementById("days-sub").textContent = d > 1 ? "dagen tot de grote dag" : d === 1 ? "dag tot de grote dag" : d === 0 ? "" : "getrouwd";
+    const pi = document.getElementById("partner-input");
+    if(document.activeElement !== pi) pi.value = S.settings.partner || "";
+    pi.disabled = !S.canWrite;
+
+    const counted = S.guests.filter(isCounted);
+    const yes = S.guests.filter(g => g.status === "ja" && !g.optioneel).length;
+    const opt = S.guests.filter(g => g.optioneel && g.status !== "nee").length;
+    const no = S.guests.filter(g => g.status === "nee").length;
+    document.getElementById("s-guests").innerHTML = `${yes} <small>van ${counted.length}</small>`;
+    document.getElementById("s-guests-foot").textContent = `${opt} optionele +1 · ${no} afgezegd`;
+    setBar("s-guests-bar", counted.length ? yes/counted.length*100 : 0);
+
+    const est = sum(S.budget, b => b.geraamd), fixed = sum(S.budget.filter(b => b.vastgelegd), b => b.geraamd);
+    document.getElementById("s-budget").innerHTML = `${eur(fixed)} <small>van ${eur(est)}</small>`;
+    const real = sum(S.budget, b => b.werkelijk);
+    document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
+    setBar("s-budget-bar", est ? fixed/est*100 : 0);
+
+    const done = S.tasks.filter(t => t.done).length;
+    const late = S.tasks.filter(t => !t.done && t.deadline && daysUntil(t.deadline) < 0).length;
+    document.getElementById("s-tasks").innerHTML = `${done} <small>van ${S.tasks.length}</small>`;
+    document.getElementById("s-tasks-foot").innerHTML = late ? `<b>${late} over de uiterste datum</b>` : "Alles op schema";
+    setBar("s-tasks-bar", S.tasks.length ? done/S.tasks.length*100 : 0);
+
+    document.getElementById("n-gasten").textContent = S.guests.length || "";
+    document.getElementById("n-budget").textContent = S.budget.length || "";
+    document.getElementById("n-taken").textContent = (S.tasks.length - done) || "";
+    document.getElementById("n-tafels").textContent = S.tables.length || "";
+    document.getElementById("n-uitn").textContent = S.households.filter(h => !h.rsvp_op).length || "";
+    document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === currentTab() ? "page" : "false"));
+  }
+
+  const delBtn = (col, id) => `<button class="del" data-del="${col}" data-id="${esc(id)}"${dis()}>Verwijder</button>`;
+  const attrs = (col, id, f, extra) => `data-col="${col}" data-id="${esc(id)}" data-f="${f}"${extra ? " " + extra : ""}${dis()}`;
+
+  // ---------- overzicht ----------
+  function viewInfo(){
+    const groups = {};
+    S.info.forEach(i => { (groups[i.sectie] = groups[i.sectie] || []).push(i); });
+    const names = Object.keys(groups).sort((a,b) => {
+      const ia = SECTION_ORDER.indexOf(a), ib = SECTION_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, "nl");
+    });
+    const rows = n => groups[n].sort((a,b) => (a.volgorde||a.created||0) - (b.volgorde||b.created||0)).map(i => {
+      const sw = /#[0-9a-f]{6}/i.test(i.waarde || "") ? `<div class="swatches">${(i.waarde.match(/#[0-9a-f]{6}/ig)||[]).map(h => `<span class="swatch"><i style="background:${h}"></i>${h}</span>`).join("")}</div>` : "";
+      return `<div class="irow"><span class="lbl">${esc(i.label)}</span>
+        <div><textarea class="cell auto" rows="1" ${attrs("info", i.id, "waarde", 'aria-label="' + esc(i.label) + '"')}>${esc(i.waarde)}</textarea>${sw}</div>
+        ${delBtn("info", i.id)}</div>`;
+    }).join("");
+    const cards = names.map(n => `<section class="info-card${n === "Na te kijken" ? " check" : ""}"><h3>${esc(n)}</h3>${rows(n)}</section>`).join("");
+    return `
+      <div class="panel-head"><h2>Overzicht</h2><span class="meta">Alles wat al geregeld of afgesproken is. Klik op een tekst om hem aan te passen.</span></div>
+      ${names.length ? `<div class="info">${cards}</div>` : `<div class="empty">Nog geen informatie. Voeg hierboven een eerste item toe.</div>`}
+      <form class="add" data-add="info">
+        <label>Onderdeel<input id="i-sectie" name="sectie" list="i-secties" required placeholder="bv. Leveranciers"${dis()}></label>
+        <datalist id="i-secties">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+        <label>Wat<input id="i-label" name="label" required placeholder="bv. Bloemist"${dis()}></label>
+        <label class="grow">Info<input id="i-waarde" name="waarde" placeholder="Naam, contact, afspraak…"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Toevoegen</button>
+      </form>`;
+  }
+
+  // ---------- gasten ----------
+  function guestRows(){
+    const q = F.q.trim().toLowerCase();
+    const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
+    const list = [...S.guests].sort((a,b) => (a.nr||9999) - (b.nr||9999) || (a.created||0)-(b.created||0)).filter(g =>
+      (F.via === "alle" || g.via === F.via) &&
+      (F.status === "alle" || (F.status === "opt" ? g.optioneel : (g.status||"open") === F.status)) &&
+      (!F.burg || g.burgerlijk) &&
+      (!q || gname(g).toLowerCase().includes(q) || (g.relatie||"").toLowerCase().includes(q)));
+    if(!list.length) return `<div class="empty">${S.guests.length ? "Geen gasten die aan deze filter voldoen." : "Nog geen gasten. Voeg hierboven de eerste toe."}</div>`;
+    const yn = (g, f, l) => `<label title="${l}"><input type="checkbox" ${attrs("guests", g.id, f, 'data-t="bool" aria-label="' + l + '"')}${g[f] ? " checked" : ""}><span aria-hidden="true">${l[0]}</span></label>`;
+    const rows = list.map(g => {
+      const st = g.status || "open";
+      return `<tr class="${st==="nee"?"declined":""}">
+        <td class="nr">${esc(g.nr || "")}</td>
+        <td><input class="cell" ${attrs("guests", g.id, "voornaam", 'aria-label="Voornaam"')} value="${esc(g.voornaam)}"></td>
+        <td><input class="cell" ${attrs("guests", g.id, "achternaam", 'aria-label="Achternaam"')} value="${esc(g.achternaam)}">${g.optioneel ? `<span class="tag opt">optioneel</span>` : ""}</td>
+        <td><select class="cell via" ${attrs("guests", g.id, "via", 'aria-label="Via"')}><option value="louis"${g.via==="louis"?" selected":""}>L</option><option value="florence"${g.via==="florence"?" selected":""}>${esc(partnerLabel()[0])}</option></select></td>
+        <td><select class="cell" ${attrs("guests", g.id, "relatie", 'aria-label="Relatie"')}>${RELATIES.map(r => `<option${g.relatie===r?" selected":""}>${r}</option>`).join("")}</select></td>
+        <td class="c"><input type="checkbox" ${attrs("guests", g.id, "kind", 'data-t="bool" aria-label="Kind (geen diner)"')}${g.kind ? " checked" : ""}></td>
+        <td class="c"><input type="checkbox" ${attrs("guests", g.id, "burgerlijk", 'data-t="bool" aria-label="Burgerlijke trouw"')}${g.burgerlijk ? " checked" : ""}></td>
+        <td><select class="cell status" data-v="${st}" ${attrs("guests", g.id, "status", 'aria-label="Status"')}>
+          <option value="open"${st==="open"?" selected":""}>Geen antwoord</option><option value="ja"${st==="ja"?" selected":""}>Komt</option><option value="nee"${st==="nee"?" selected":""}>Komt niet</option></select></td>
+        <td><div class="crd">${yn(g,"ceremonie","Ceremonie")}${yn(g,"receptie","Receptie")}${yn(g,"diner","Diner")}</div></td>
+        <td><select class="cell" ${attrs("guests", g.id, "hoofdgerecht", 'aria-label="Hoofdgerecht"')}><option value="">—</option>${["vlees","vis","vegetarisch"].map(h => `<option value="${h}"${g.hoofdgerecht===h?" selected":""}>${h[0].toUpperCase()+h.slice(1)}</option>`).join("")}</select></td>
+        <td><input class="cell" ${attrs("guests", g.id, "dieet", 'aria-label="Dieet of allergie"')} value="${esc(g.dieet)}" placeholder="—"></td>
+        <td class="num">${delBtn("guests", g.id)}</td></tr>`;
+    }).join("");
+    return `<div class="scroll guests"><table>
+      <thead><tr><th>#</th><th>Voornaam</th><th>Achternaam</th><th>Via</th><th>Relatie</th><th class="c" title="Kind: komt niet naar het diner">Kind</th><th class="c">Burg.</th><th>Status</th><th class="c">Aanwezig</th><th>Hoofdgerecht</th><th>Dieet / allergie</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+      <p class="meta">${list.length} van ${S.guests.length} gasten getoond.</p>`;
+  }
+  function viewGuests(){
+    const g = S.guests, alive = g.filter(x => x.status !== "nee");
+    const c = { alle: g.length, ja: g.filter(x=>x.status==="ja").length, open: g.filter(x=>(x.status||"open")==="open").length, nee: g.filter(x=>x.status==="nee").length, opt: g.filter(x=>x.optioneel).length };
+    const via = { louis: g.filter(x=>x.via==="louis").length, florence: g.filter(x=>x.via==="florence").length };
+    const hg = h => g.filter(x => x.status === "ja" && x.hoofdgerecht === h).length;
+    const chip = (grp, k, l, n) => `<button class="chip-btn" data-fgrp="${grp}" data-fval="${k}" aria-pressed="${F[grp]===k}">${l} ${n}</button>`;
+    return `
+      <div class="panel-head"><h2>Gasten</h2>
+        <span class="meta">Burgerlijke trouw: ${alive.filter(x=>x.burgerlijk).length} · hoofdgerecht vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")} · ${alive.filter(x=>(x.dieet||"").trim()).length} met dieetwens</span></div>
+      <div class="toolbar">
+        <input id="g-search" class="search" type="search" placeholder="Zoek op naam of relatie" value="${esc(F.q)}" aria-label="Zoek gast">
+        <div class="chips">${chip("via","alle","Iedereen",g.length)}${chip("via","louis","Via Louis",via.louis)}${chip("via","florence","Via "+esc(partnerLabel()),via.florence)}</div>
+        <span class="sep" aria-hidden="true"></span>
+        <div class="chips">${chip("status","alle","Alle",c.alle)}${chip("status","ja","Komt",c.ja)}${chip("status","open","Geen antwoord",c.open)}${chip("status","nee","Komt niet",c.nee)}${chip("status","opt","Optioneel",c.opt)}
+          <button class="chip-btn" data-burg aria-pressed="${F.burg}">Burgerlijke trouw</button></div>
+      </div>
+      <div id="guest-list">${guestRows()}</div>
+      <form class="add" data-add="guests">
+        <label class="grow">Voornaam<input id="g-voornaam" name="voornaam" required${dis()}></label>
+        <label class="grow">Achternaam<input id="g-achternaam" name="achternaam"${dis()}></label>
+        <label>Via<select id="g-via" name="via"${dis()}><option value="louis">Louis</option><option value="florence">${esc(partnerLabel())}</option></select></label>
+        <label>Relatie<select id="g-relatie" name="relatie"${dis()}>${RELATIES.slice(0,5).map(r => `<option>${r}</option>`).join("")}</select></label>
+        <button class="btn" type="submit"${dis()}>Gast toevoegen</button>
+      </form>`;
+  }
+
+  // ---------- budget ----------
+  function viewBudget(){
+    const list = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b));
+    const est = sum(list, b => b.geraamd), real = sum(list, b => b.werkelijk), fixed = sum(list.filter(b => b.vastgelegd), b => b.geraamd);
+    const rows = list.map(b => {
+      const diff = b.werkelijk ? (Number(b.werkelijk)||0) - (Number(b.geraamd)||0) : null;
+      return `<tr data-row-id="${esc(b.id)}">
+        <td style="width:30px"><button class="handle" data-handle="${esc(b.id)}" title="Sleep om te verplaatsen (of pijltjestoetsen)" aria-label="Verplaats ${esc(b.post)}"${dis()}>⋮⋮</button></td>
+        <td><input class="cell" ${attrs("budget", b.id, "post", 'aria-label="Post"')} value="${esc(b.post)}"></td>
+        <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "geraamd", 'data-t="money" aria-label="Geraamd"')} value="${esc(moneyIn(b.geraamd))}" placeholder="0"></td>
+        <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "werkelijk", 'data-t="money" aria-label="Werkelijk"')} value="${esc(moneyIn(b.werkelijk))}" placeholder="—"></td>
+        <td class="num" style="color:${diff===null?"var(--muted)":diff>0?"var(--warn)":"var(--ok)"}">${diff===null?"—":(diff>0?"+":"")+eur2(diff)}</td>
+        <td class="c"><input type="checkbox" ${attrs("budget", b.id, "vastgelegd", 'data-t="bool" aria-label="Vastgelegd"')}${b.vastgelegd?" checked":""}></td>
+        <td><input class="cell" ${attrs("budget", b.id, "opmerking", 'aria-label="Opmerking"')} value="${esc(b.opmerking)}" placeholder="—"></td>
+        <td class="num">${delBtn("budget", b.id)}</td></tr>`;
+    }).join("");
+    return `
+      <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)}</span></div>
+      ${list.length ? `<div class="scroll budget"><table>
+        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th>Opmerking</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td></td><td>Totaal</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td colspan="2"></td></tr></tfoot>
+        </table></div>` : `<div class="empty">Nog geen budgetposten. Voeg hierboven de eerste toe.</div>`}
+      <form class="add" data-add="budget">
+        <label class="grow">Post<input id="b-post" name="post" required placeholder="bv. Champagne"${dis()}></label>
+        <label>Geraamd (€)<input id="b-geraamd" name="geraamd" inputmode="decimal" placeholder="0" style="width:120px"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Post toevoegen</button>
+      </form>`;
+  }
+
+  // ---------- taken ----------
+  function viewTasks(){
+    const cats = [...new Set(S.tasks.map(t => t.categorie).filter(Boolean))].sort((a,b) => a.localeCompare(b, "nl"));
+    let list = S.tasks.filter(t => (F.taskView === "alle" || (F.taskView === "gedaan" ? t.done : !t.done)) && (!F.taskCat || t.categorie === F.taskCat));
+    sortTasks(list);
+    const canDrag = S.canWrite && F.taskView === "open" && !F.taskCat;
+    const who = w => `<option value="louis"${w==="louis"?" selected":""}>Louis</option><option value="partner"${w==="partner"?" selected":""}>${esc(partnerLabel())}</option><option value="samen"${(!w||w==="samen")?" selected":""}>Samen</option>`;
+    const prioSel = (t) => `<select class="cell" ${attrs("tasks", t.id, "prioriteit", 'aria-label="Prioriteit"')}>${[["","—"],["urgent","Urgent"],["hoog","Hoog"],["middel","Middel"]].map(([v,l]) => `<option value="${v}"${(t.prioriteit||"")===v?" selected":""}>${l}</option>`).join("")}</select>`;
+    let lastMonth = null;
+    const items = list.map(t => {
+      const d = daysUntil(t.deadline);
+      let flag = "";
+      if(t.done) flag = `<span class="tag ok">Gedaan</span>`;
+      else if(d !== null && d < 0) flag = `<span class="tag late">${-d} d te laat</span>`;
+      else if(d !== null && d <= 30) flag = `<span class="tag soon">nog ${d} d</span>`;
+      if(!t.done && t.prioriteit) flag += `<span class="tag ${t.prioriteit}">${t.prioriteit[0].toUpperCase()+t.prioriteit.slice(1)}</span>`;
+      const sub = [t.categorie ? `<span class="cat">${esc(t.categorie)}</span>` : "", t.leverancier ? esc(t.leverancier) : "", t.opmerking ? esc(t.opmerking) : ""].filter(Boolean).join("<span aria-hidden=\"true\">·</span>");
+      let head = "";
+      if(!t.done && F.taskView !== "gedaan"){
+        const m = t.deadline ? new Date(t.deadline).toLocaleDateString("nl-BE",{month:"long",year:"numeric"}) : "Zonder datum";
+        if(m !== lastMonth){ head = `<div class="group-h" data-month="${t.deadline ? esc(t.deadline.slice(0,7)) : ""}">${esc(m)}</div>`; lastMonth = m; }
+      } else if(t.done && lastMonth !== "__done"){ head = `<div class="group-h" data-month="__done">Gedaan</div>`; lastMonth = "__done"; }
+      const handleOk = canDrag && !t.done;
+      return `${head}<div class="task${t.done?" done":""}"${t.done ? "" : ` data-row-id="${esc(t.id)}"`}>
+        <button class="handle" data-handle="${esc(t.id)}" data-kind="task" title="${handleOk ? "Sleep naar een andere plaats of maand" : "Slepen kan in 'Te doen' zonder categoriefilter"}" aria-label="Verplaats ${esc(t.titel)}"${handleOk ? "" : " disabled"}>⋮⋮</button>
+        <input type="checkbox" ${attrs("tasks", t.id, "done", 'data-t="bool" aria-label="Gedaan"')}${t.done?" checked":""}>
+        <div class="main"><input class="cell title" ${attrs("tasks", t.id, "titel", 'aria-label="Taak"')} value="${esc(t.titel)}">${sub ? `<div class="sub">${sub}</div>` : ""}</div>
+        <input class="cell" type="date" ${attrs("tasks", t.id, "deadline", 'aria-label="Uiterste datum"')} value="${esc(t.deadline||"")}">
+        <select class="cell" ${attrs("tasks", t.id, "wie", 'aria-label="Wie"')}>${who(t.wie)}</select>
+        <div class="flags">${flag}</div>
+        ${delBtn("tasks", t.id)}
+        ${confirmDone === t.id ? `<div class="confirm" role="group" aria-label="Bevestigen"><span>“${esc(t.titel)}” markeren als gedaan?</span><button class="btn" data-confirm-done="${esc(t.id)}">Ja, gedaan</button><button class="chip-btn" data-confirm-cancel>Annuleer</button></div>` : ""}</div>`;
+    }).join("");
+    const cnt = { open: S.tasks.filter(t=>!t.done).length, gedaan: S.tasks.filter(t=>t.done).length, alle: S.tasks.length };
+    const chip = (k, l) => `<button class="chip-btn" data-tview="${k}" aria-pressed="${F.taskView===k}">${l} ${cnt[k]}</button>`;
+    return `
+      <div class="panel-head"><h2>Taken</h2></div>
+      <div class="toolbar">
+        <div class="chips">${chip("open","Te doen")}${chip("gedaan","Gedaan")}${chip("alle","Alle")}</div>
+        <select id="t-cat-filter" class="search" style="flex:0 1 220px" aria-label="Filter op categorie"><option value="">Alle categorieën</option>${cats.map(c => `<option${F.taskCat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
+      </div>
+      ${list.length ? `<div class="tasks">${items}</div>` : `<div class="empty">Geen taken in deze weergave.</div>`}
+      <form class="add" data-add="tasks">
+        <label class="grow">Taak<input id="t-titel" name="titel" required placeholder="bv. Champagne bestellen"${dis()}></label>
+        <label>Categorie<input id="t-categorie" name="categorie" list="t-cats" style="width:150px"${dis()}></label>
+        <datalist id="t-cats">${cats.map(c => `<option value="${esc(c)}">`).join("")}</datalist>
+        <label>Uiterste datum<input id="t-deadline" name="deadline" type="date"${dis()}></label>
+        <label>Wie<select id="t-wie" name="wie"${dis()}>${who("samen")}</select></label>
+        <button class="btn" type="submit"${dis()}>Taak toevoegen</button>
+      </form>`;
+  }
+
+  // ---------- tafels (bovenaanzicht) ----------
+  const T = { sel:null, placing:null, moving:null, q:"" };
+  const sheet = document.getElementById("sheet");
+  function seatMap(){
+    const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
+    const byId = Object.fromEntries(tables.map(t => [t.id, t]));
+    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => (a.nr||9999)-(b.nr||9999));
+    const map = {}, placed = new Set();
+    coming.forEach(g => {
+      const t = byId[g.tafel]; if(!t || typeof g.plaats !== "number") return;
+      if(g.plaats < 0 || g.plaats >= (Number(t.plaatsen)||0)) return;
+      const k = g.tafel + ":" + g.plaats; if(map[k]) return;
+      map[k] = g; placed.add(g.id);
+    });
+    return { tables, map, coming, unplaced: coming.filter(g => !placed.has(g.id)) };
+  }
+  const firstName = g => g.voornaam || gname(g);
+  function viewTables(){
+    const { tables, map, coming, unplaced } = seatMap();
+    const seated = Object.values(map);
+    const seatsTotal = sum(tables, t => t.plaatsen);
+    const cards = tables.map(t => {
+      const n = Math.max(0, Number(t.plaatsen)||0), rows = Math.max(1, Math.ceil(n/2));
+      let seats = "", occ = 0, def = 0;
+      for(let i = 0; i < n; i++){
+        const g = map[t.id + ":" + i];
+        if(g){ occ++; if(g.definitief) def++; }
+        const cls = g ? (g.definitief ? "ok" : "wait") : "free";
+        const sel = T.sel && T.sel.t === t.id && T.sel.i === i ? " sel" : "";
+        const desc = g ? `${gname(g)}, ${g.definitief ? "definitief" : "voorlopig"}` : "vrij";
+        seats += `<button class="seat ${cls}${sel}" style="grid-column:${i % 2 ? 3 : 1};grid-row:${Math.floor(i/2) + 1}" data-spot="${esc(t.id)}:${i}" title="${esc(g ? gname(g) : "Vrije plaats")} · plaats ${i+1}" aria-label="${esc(t.naam || "Tafel")}, plaats ${i+1}: ${esc(desc)}">${esc(g ? firstName(g) : "vrij")}</button>`;
+      }
+      return `<section class="tplan">
+        <div class="thead"><input class="cell tname" ${attrs("tables", t.id, "naam", 'aria-label="Naam tafel"')} value="${esc(t.naam)}"></div>
+        <div class="tgrid">${seats}<div class="tbl" style="grid-row:1 / span ${rows}" aria-hidden="true"><span>${esc(t.naam || "Tafel")}</span></div></div>
+        <div class="counter">
+          <button data-cap="${esc(t.id)}" data-d="-1" aria-label="Eén plaats minder aan ${esc(t.naam)}"${dis()}>−</button>
+          <div class="cnt"><b>${n}</b><small>plaatsen</small></div>
+          <button data-cap="${esc(t.id)}" data-d="1" aria-label="Eén plaats meer aan ${esc(t.naam)}"${dis()}>+</button>
+        </div>
+        <div class="tmeta">${occ} bezet · ${def} definitief · ${n - occ} vrij</div>
+      </section>`;
+    }).join("");
+    return `
+      <div class="panel-head"><h2>Tafelschikking</h2><span class="meta">${seatsTotal} plaatsen · ${seated.length} bezet (${seated.filter(g => g.definitief).length} definitief) · ${coming.length} gasten zonder afzeggingen</span></div>
+      <div class="legend"><span><i style="background:var(--seat-ok)"></i>Definitief</span><span><i style="background:var(--seat-wait)"></i>Kan nog verplaatsen</span><span><i style="background:var(--seat-free);border:1px solid var(--seat-free-line)"></i>Vrije plaats</span><span>Tik op een plaats om iemand te zetten, te verplaatsen of definitief te maken.</span></div>
+      ${coming.length ? `<div class="unplaced"><h3>Nog geen plaats · ${unplaced.length} gasten</h3>
+        ${unplaced.length ? `<div class="pills">${unplaced.map(g => `<button class="pill" data-place-guest="${esc(g.id)}" aria-pressed="${T.placing === g.id}"${dis()}>${esc(gname(g))}</button>`).join("")}</div>` : `<span class="meta">Iedereen heeft een plaats.</span>`}</div>` : ""}
+      ${tables.length ? `<div class="plan">${cards}</div>` : `<div class="empty">De tafels worden geladen…</div>`}`;
+  }
+  function refreshTables(){ if(currentTab() === "tafels" && !isEditing()) renderTab(); renderSheet(); }
+  function clearTableState(){ T.sel = null; T.placing = null; T.moving = null; T.q = ""; }
+  function onSpot(key){
+    const [t, iS] = key.split(":"), i = Number(iS);
+    const { map } = seatMap(), g = map[key];
+    if(!S.canWrite){ T.sel = { t, i }; refreshTables(); return; }
+    if(T.placing){
+      if(g){ toast("Deze plaats is al bezet. Kies een vrije (rode) plaats."); return; }
+      write("guests", T.placing, { tafel: t, plaats: i, definitief: false });
+      T.placing = null; T.sel = { t, i }; refreshTables(); return;
+    }
+    if(T.moving){
+      const mg = S.guests.find(x => x.id === T.moving); T.moving = null;
+      if(mg && !(mg.tafel === t && mg.plaats === i)){
+        const from = { tafel: mg.tafel, plaats: mg.plaats };
+        write("guests", mg.id, { tafel: t, plaats: i });
+        if(g) write("guests", g.id, { tafel: from.tafel, plaats: from.plaats });
+        toast(g ? `${firstName(mg)} en ${firstName(g)} zijn van plaats gewisseld` : `${firstName(mg)} is verplaatst`);
+      }
+      T.sel = { t, i }; refreshTables(); return;
+    }
+    T.sel = (T.sel && T.sel.t === t && T.sel.i === i) ? null : { t, i }; T.q = "";
+    refreshTables();
+  }
+  function renderSheet(listOnly){
+    if(currentTab() === "uitnodigingen" && S.dbOk && J.h){ renderJoinSheet(listOnly); return; }
+    const show = currentTab() === "tafels" && S.dbOk && (T.sel || T.placing || T.moving);
+    sheet.hidden = !show; document.body.classList.toggle("sheet-open", !!show);
+    if(!show) return;
+    const { tables, map, unplaced } = seatMap();
+    if(T.placing || T.moving){
+      const g = S.guests.find(x => x.id === (T.placing || T.moving));
+      if(!g){ clearTableState(); renderSheet(); return; }
+      sheet.innerHTML = `<div class="sheet-h"><h3>${T.placing ? "Plaats kiezen" : "Verplaatsen"}</h3><button class="del" data-sheet-close>Annuleer</button></div>
+        <p class="meta">${T.placing ? `Tik op een vrije (rode) plaats voor <b>${esc(gname(g))}</b>.` : `Tik op de nieuwe plaats voor <b>${esc(gname(g))}</b>. Is die bezet, dan wisselen de twee gasten van plaats.`}</p>`;
+      return;
+    }
+    const t = tables.find(x => x.id === T.sel.t);
+    if(!t || T.sel.i >= (Number(t.plaatsen)||0)){ clearTableState(); renderSheet(); return; }
+    const g = map[T.sel.t + ":" + T.sel.i];
+    const title = `${esc(t.naam || "Tafel")} · plaats ${T.sel.i + 1}`;
+    if(g){
+      sheet.innerHTML = `<div class="sheet-h"><h3>${title}</h3><button class="del" data-sheet-close>Sluiten</button></div>
+        <p><b>${esc(gname(g))}</b> <span class="tag ${g.definitief ? "ok" : "soon"}">${g.definitief ? "Definitief" : "Kan nog verplaatsen"}</span></p>
+        <div class="acts"><button class="btn" data-sheet-def${dis()}>${g.definitief ? "Maak voorlopig" : "Maak definitief"}</button><button class="btn ghost" data-sheet-move${dis()}>Verplaatsen</button><button class="btn ghost" data-sheet-unseat${dis()}>Van tafel halen</button></div>`;
+      return;
+    }
+    const q = T.q.trim().toLowerCase();
+    const list = unplaced.filter(x => !q || gname(x).toLowerCase().includes(q));
+    const listHtml = list.length ? list.map(x => `<button data-sheet-pick="${esc(x.id)}"${dis()}><span>${esc(gname(x))}</span><small>${x.via === "florence" ? "F" : "L"} · ${esc(x.relatie || "")}</small></button>`).join("")
+      : `<p class="meta" style="padding:10px 12px">${unplaced.length ? "Geen gast gevonden." : "Iedereen heeft al een plaats."}</p>`;
+    if(listOnly){ const gl = sheet.querySelector(".glist"); if(gl){ gl.innerHTML = listHtml; return; } }
+    sheet.innerHTML = `<div class="sheet-h"><h3>${title} <span class="meta">· vrij</span></h3><button class="del" data-sheet-close>Sluiten</button></div>
+      <input id="sheet-q" class="search" style="max-width:none" type="search" placeholder="Zoek een gast zonder plaats (${unplaced.length})" value="${esc(T.q)}" aria-label="Zoek gast"${dis()}>
+      <div class="glist">${listHtml}</div>`;
+  }
+  sheet.addEventListener("input", e => { if(e.target.id === "sheet-q"){ T.q = e.target.value; renderSheet(true); } if(e.target.id === "join-q"){ J.q = e.target.value; renderSheet(true); } });
+  sheet.addEventListener("click", e => {
+    if(e.target.closest("[data-sheet-close]")){ clearTableState(); J.h = null; J.q = ""; renderSheet(); return; }
+    const jp = e.target.closest("[data-join-pick]");
+    if(jp && J.h){ write("guests", jp.dataset.joinPick, { gezin: J.h }); toast("Toegevoegd aan het gezin"); return; }
+    const g = T.sel && seatMap().map[T.sel.t + ":" + T.sel.i];
+    if(e.target.closest("[data-sheet-def]") && g){ write("guests", g.id, { definitief: !g.definitief }); return; }
+    if(e.target.closest("[data-sheet-move]") && g){ T.moving = g.id; T.sel = null; refreshTables(); return; }
+    if(e.target.closest("[data-sheet-unseat]") && g){ write("guests", g.id, { tafel: "", plaats: null, definitief: false }); toast(`${firstName(g)} heeft geen plaats meer`); return; }
+    const pk = e.target.closest("[data-sheet-pick]");
+    if(pk && T.sel){ write("guests", pk.dataset.sheetPick, { tafel: T.sel.t, plaats: T.sel.i, definitief: false }); T.q = ""; }
+  });
+  document.addEventListener("keydown", e => { if(e.key === "Escape" && (T.sel || T.placing || T.moving || J.h)){ clearTableState(); J.h = null; refreshTables(); } });
+
+  function viewTablesOld(){
+    const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
+    const ids = new Set(tables.map(t => t.id));
+    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => (a.nr||9999)-(b.nr||9999));
+    const unplaced = coming.filter(g => !g.tafel || !ids.has(g.tafel));
+    const seatsTotal = sum(tables, t => t.plaatsen);
+    const opts = `<option value="">+ Gast aan deze tafel zetten…</option>` + unplaced.map(g => `<option value="${esc(g.id)}">${esc(gname(g))}</option>`).join("");
+    const cards = tables.map(t => {
+      const seated = coming.filter(g => g.tafel === t.id), cap = Number(t.plaatsen)||0, n = seated.length;
+      return `<div class="table-card">
+        <div class="row"><input class="cell tname" ${attrs("tables", t.id, "naam", 'aria-label="Naam tafel"')} value="${esc(t.naam)}">
+          <label class="seats"><input class="cell num" type="number" min="1" max="40" ${attrs("tables", t.id, "plaatsen", 'data-t="int" aria-label="Aantal plaatsen"')} value="${esc(cap)}"> pl.</label></div>
+        <div class="cap${n>cap?" over":""}"><span>${n} / ${cap} bezet</span><span>${n>cap?`${n-cap} te veel`:`${cap-n} vrij`}</span></div>
+        <div class="bar${n>cap?" over":""}"><span style="width:${cap?Math.min(100,n/cap*100):0}%"></span></div>
+        ${seated.length ? `<ul class="seated">${seated.map(g => `<li><span>${esc(gname(g))}</span><button class="x" data-unseat="${esc(g.id)}" aria-label="Van tafel halen"${dis()}>×</button></li>`).join("")}</ul>` : ""}
+        ${unplaced.length ? `<select data-seat="${esc(t.id)}" aria-label="Gast aan tafel zetten"${dis()}>${opts}</select>` : ""}
+        <div>${delBtn("tables", t.id)}</div></div>`;
+    }).join("");
+    return `
+      <div class="panel-head"><h2>Tafelschikking</h2><span class="meta">${seatsTotal} plaatsen voor ${coming.length} gasten (zonder afzeggingen, met optionele +1)</span></div>
+      <form class="add" data-add="tables">
+        <label class="grow">Naam tafel<input id="tb-naam" name="naam" required placeholder="bv. Tafel 1 of Eretafel"${dis()}></label>
+        <label>Plaatsen<input id="tb-plaatsen" name="plaatsen" type="number" min="1" max="40" value="10" style="width:80px"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Tafel toevoegen</button>
+      </form>
+      ${coming.length ? `<div class="unplaced"><h3>Nog niet geplaatst · ${unplaced.length} gasten</h3>
+        ${unplaced.length ? `<div class="pills">${unplaced.map(g => `<span class="pill">${esc(gname(g))}</span>`).join("")}</div>` : `<span class="meta">Iedereen heeft een plaats.</span>`}</div>` : ""}
+      ${tables.length ? `<div class="tables">${cards}</div>` : `<div class="empty">Nog geen tafels. Voeg hierboven een tafel toe en zet er gasten aan.</div>`}`;
+  }
+
+  // ---------- uitnodigingen ----------
+  const FI = { q:"", filter:"alle" };
+  const J = { h:null, q:"" };
+  const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const SETTING_FIELDS = [
+    ["site_url", "Webadres van de app", "url", "bv. https://www.florenceenlouis.be"],
+    ["rsvp_deadline", "Antwoorden vóór", "date", ""],
+    ["rsvp_welkom", "Welkomsttekst", "textarea", ""],
+    ["rsvp_programma", "Programma (één moment per lijn)", "textarea", ""],
+    ["rsvp_locatie", "Locatie", "text", ""],
+    ["rsvp_dresscode", "Dresscode", "text", "nog te bepalen"],
+    ["rsvp_extra", "Extra info voor gasten", "textarea", "bv. overnachting, cadeautip"],
+    ["meldingen_email", "Stuur mij een mail bij elk antwoord", "email", "jouw e-mailadres"],
+  ];
+  function newCode(){
+    const used = new Set(S.households.map(h => String(h.code)));
+    let c;
+    do {
+      const a = new Uint8Array(8); crypto.getRandomValues(a);
+      c = Array.from(a, b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+    } while(used.has(c));
+    return c;
+  }
+  function siteBase(){
+    const s = String(S.settings.site_url || "").trim().replace(/\/+$/, "");
+    return s || (location.origin + location.pathname.replace(/\/[^/]*$/, ""));
+  }
+  const rsvpLink = h => `${siteBase()}/r/?c=${encodeURIComponent(h.code)}`;
+  function qrSvg(text, margin){
+    if(!window.qrcode) return "";
+    const q = qrcode(0, "M"); q.addData(text); q.make();
+    return q.createSvgTag({ cellSize: 4, margin: margin == null ? 2 : margin, scalable: true }).replace(/fill="black"/g, 'fill="#7B1A50"');
+  }
+  const hname = id => { const h = S.households.find(x => x.id === id); return h ? h.naam : ""; };
+  const isCouple = g => g.relatie === "Bruid" || g.relatie === "Bruidegom";
+  function fmtStamp(s){
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/.exec(String(s || ""));
+    return m ? `${+m[3]}/${+m[2]}${m[4] ? ` om ${m[4]}u${m[5]}` : ""}` : String(s || "");
+  }
+  const STATUS_TXT = { ja:"komt", nee:"komt niet", open:"nog geen antwoord" };
+
+  function inviteCards(){
+    const q = FI.q.trim().toLowerCase();
+    const members = id => S.guests.filter(g => g.gezin === id).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const hs = [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).filter(h =>
+      (FI.filter === "alle" || (FI.filter === "ja" ? !!h.rsvp_op : !h.rsvp_op)) &&
+      (!q || String(h.naam).toLowerCase().includes(q) || members(h.id).some(g => gname(g).toLowerCase().includes(q))));
+    if(!hs.length) return `<div class="empty">${S.households.length ? "Geen gezinnen die aan deze filter voldoen." : "Nog geen gezinnen. Voeg hierboven het eerste toe."}</div>`;
+    return `<div class="invs">${hs.map(h => {
+      const ms = members(h.id), link = rsvpLink(h);
+      return `<article class="inv">
+        <div class="inv-top">
+          <div class="inv-qr" aria-hidden="true">${qrSvg(link)}</div>
+          <div class="inv-main">
+            <input class="cell inv-name" ${attrs("households", h.id, "naam", 'aria-label="Naam op de uitnodiging"')} value="${esc(h.naam)}">
+            <div>${h.rsvp_op ? `<span class="tag ok">Geantwoord op ${esc(fmtStamp(h.rsvp_op))}</span>` : `<span class="tag quiet">Nog geen antwoord</span>`}</div>
+            <div class="inv-link"><code>${esc(link)}</code></div>
+            <div class="inv-acts">
+              <button class="chip-btn" data-copy="${esc(link)}">Link kopiëren</button>
+              <button class="chip-btn" data-qr-dl="${esc(h.id)}">QR downloaden</button>
+              <a class="chip-btn" href="${esc(link)}" target="_blank" rel="noopener">Bekijk als gast</a>
+            </div>
+          </div>
+        </div>
+        ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
+        ${ms.length ? `<ul class="inv-members">${ms.map(g => `<li><span class="dot ${esc(g.status || "open")}" title="${STATUS_TXT[g.status || "open"] || ""}"></span><span class="nm" title="${esc(STATUS_TXT[g.status || "open"] || "")}">${esc(gname(g))}</span>${g.kind ? '<span class="tag opt">kind</span>' : ""}${g.optioneel ? '<span class="tag opt">+1</span>' : ""}<button class="x" data-split="${esc(g.id)}" title="Uit dit gezin halen" aria-label="${esc(gname(g))} uit dit gezin halen"${dis()}>×</button></li>`).join("")}</ul>` : `<p class="meta" style="margin:0">Nog niemand in dit gezin.</p>`}
+        <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${delBtn("households", h.id)}</div>
+      </article>`;
+    }).join("")}</div>`;
+  }
+
+  function viewInvites(){
+    const hs = S.households, answered = hs.filter(h => h.rsvp_op).length;
+    const people = S.guests.filter(g => g.gezin && !isCouple(g));
+    const n = s => people.filter(g => (g.status || "open") === s).length;
+    const yes = people.filter(g => g.status === "ja");
+    const hg = h => yes.filter(g => g.diner && g.hoofdgerecht === h).length;
+    const loose = S.guests.filter(g => !g.gezin && !isCouple(g)).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const chip = (k, l, c) => `<button class="chip-btn" data-ifilter="${k}" aria-pressed="${FI.filter === k}">${l} ${c}</button>`;
+    const field = ([k, label, type, ph]) => `<label${type === "textarea" ? ' style="grid-column:1 / -1"' : ""}>${esc(label)}${type === "textarea"
+      ? `<textarea id="set-${k}" data-setting="${k}" rows="3" placeholder="${esc(ph)}"${dis()}>${esc(S.settings[k] || "")}</textarea>`
+      : `<input id="set-${k}" data-setting="${k}" type="${type}" placeholder="${esc(ph)}" value="${esc(S.settings[k] || "")}"${dis()}>`}</label>`;
+    return `
+      <div class="panel-head"><h2>Uitnodigingen</h2><span class="meta">${answered} van ${hs.length} gezinnen hebben geantwoord</span></div>
+      <form class="add" data-add="households">
+        <label class="grow">Naam op de uitnodiging<input id="h-naam" name="naam" required placeholder="bv. Familie Peeters"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Gezin toevoegen</button>
+      </form>
+      <div class="inv-stats">
+        <span><b>${n("ja")}</b> komen</span><span><b>${n("nee")}</b> komen niet</span><span><b>${n("open")}</b> nog geen antwoord</span>
+        <span>Diner: <b>${yes.filter(g => g.diner).length}</b> (vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")})</span>
+        <span><b>${yes.filter(g => (g.dieet || "").trim()).length}</b> met allergie of dieet</span>
+      </div>
+      <details class="inv-settings"${S.settings.site_url ? "" : " open"}>
+        <summary>Wat gasten zien op de antwoordpagina</summary>
+        <div class="grid">${SETTING_FIELDS.map(field).join("")}</div>
+      </details>
+      <div class="toolbar">
+        <input id="i-search" class="search" type="search" placeholder="Zoek een gezin of gast" value="${esc(FI.q)}" aria-label="Zoek een gezin of gast">
+        <div class="chips">${chip("alle", "Alle", hs.length)}${chip("ja", "Geantwoord", answered)}${chip("nee", "Nog niet", hs.length - answered)}</div>
+        <span class="sep" aria-hidden="true"></span>
+        <div class="chips"><button class="chip-btn" data-qr-zip>Alle QR-codes (zip)</button><button class="chip-btn" data-links-csv>Lijst met links (CSV)</button></div>
+      </div>
+      ${loose.length ? `<div class="unplaced"><h3>Nog geen gezin · ${loose.length} gasten</h3>
+        <div class="pills">${loose.map(g => `<button class="pill" data-newh="${esc(g.id)}" title="Maak een nieuw gezin met ${esc(gname(g))}"${dis()}>${esc(gname(g))} +</button>`).join("")}</div>
+        <span class="meta">Tik op een naam om er een nieuw gezin mee te maken, of voeg de gast via "+ Gast toevoegen" bij een bestaand gezin.</span></div>` : ""}
+      <div id="inv-list">${inviteCards()}</div>`;
+  }
+
+  function renderJoinSheet(listOnly){
+    const h = S.households.find(x => x.id === J.h);
+    if(!h){ J.h = null; sheet.hidden = true; document.body.classList.remove("sheet-open"); return; }
+    sheet.hidden = false; document.body.classList.add("sheet-open");
+    const q = J.q.trim().toLowerCase();
+    const list = S.guests.filter(g => g.gezin !== h.id && !isCouple(g) && (!q || gname(g).toLowerCase().includes(q)))
+      .sort((a,b) => (a.gezin ? 1 : 0) - (b.gezin ? 1 : 0) || (a.nr||9999) - (b.nr||9999));
+    const listHtml = list.length ? list.map(g => `<button data-join-pick="${esc(g.id)}"${dis()}><span>${esc(gname(g))}</span><small>${g.gezin ? "nu bij " + esc(hname(g.gezin)) : "nog geen gezin"}</small></button>`).join("")
+      : `<p class="meta" style="padding:10px 12px">Geen gast gevonden.</p>`;
+    if(listOnly){ const gl = sheet.querySelector(".glist"); if(gl){ gl.innerHTML = listHtml; return; } }
+    sheet.innerHTML = `<div class="sheet-h"><h3>Toevoegen aan ${esc(h.naam)}</h3><button class="del" data-sheet-close>Klaar</button></div>
+      <input id="join-q" class="search" style="max-width:none" type="search" placeholder="Zoek een gast" value="${esc(J.q)}" aria-label="Zoek een gast">
+      <div class="glist">${listHtml}</div>`;
+  }
+
+  function download(name, blob){
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  const safeName = s => String(s || "gezin").replace(/[\\/:*?"<>|]+/g, "").trim().slice(0, 80) || "gezin";
+  const qrFile = h => `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSvg(rsvpLink(h), 4).replace("<svg ", '<svg width="1000" height="1000" ');
+  function linksCsv(){
+    const rows = [["Gezin", "Link", "Code", "Aantal personen", "Gasten"]];
+    [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).forEach(h => {
+      const ms = S.guests.filter(g => g.gezin === h.id);
+      rows.push([h.naam, rsvpLink(h), h.code, ms.length, ms.map(gname).join(", ")]);
+    });
+    return "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
+  }
+  function copyText(t){
+    const done = () => toast("Link gekopieerd");
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => window.prompt("Kopieer de link:", t));
+    else window.prompt("Kopieer de link:", t);
+  }
+
+  function invitesClick(e){
+    const t = e.target;
+    const f = t.closest("[data-ifilter]"); if(f){ FI.filter = f.dataset.ifilter; renderTab(); return true; }
+    const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy); return true; }
+    const dl = t.closest("[data-qr-dl]");
+    if(dl){ const h = S.households.find(x => x.id === dl.dataset.qrDl); if(h) download(`QR ${safeName(h.naam)}.svg`, new Blob([qrFile(h)], { type: "image/svg+xml" })); return true; }
+    if(t.closest("[data-links-csv]")){ download("Uitnodigingen - links.csv", new Blob([linksCsv()], { type: "text/csv;charset=utf-8" })); return true; }
+    if(t.closest("[data-qr-zip]")){
+      if(!window.JSZip){ toast("Even geduld, het zip-onderdeel wordt nog geladen."); return true; }
+      const zip = new JSZip(), names = new Set();
+      S.households.forEach(h => { let n = `QR ${safeName(h.naam)}`, k = 2; while(names.has(n)) n = `QR ${safeName(h.naam)} (${k++})`; names.add(n); zip.file(n + ".svg", qrFile(h)); });
+      zip.file("Uitnodigingen - links.csv", linksCsv());
+      zip.generateAsync({ type: "blob" }).then(b => download("QR-codes uitnodigingen.zip", b));
+      return true;
+    }
+    const sp = t.closest("[data-split]"); if(sp){ write("guests", sp.dataset.split, { gezin: "" }); toast("Uit het gezin gehaald"); return true; }
+    const jo = t.closest("[data-join-open]"); if(jo){ J.h = jo.dataset.joinOpen; J.q = ""; renderSheet(); const i = document.getElementById("join-q"); if(i) i.focus(); return true; }
+    const nh = t.closest("[data-newh]");
+    if(nh){
+      const g = S.guests.find(x => x.id === nh.dataset.newh); if(!g) return true;
+      const p = add("households", { naam: gname(g), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" });
+      if(p) p.then(ref => { if(ref && ref.id) write("guests", g.id, { gezin: ref.id }); });
+      return true;
+    }
+    return false;
+  }
+
+  // ---------- render ----------
+  function autosize(root){ (root || main).querySelectorAll("textarea.auto").forEach(t => { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }); }
+  function renderTab(){
+    if(S.dbOk === null){ main.innerHTML = `<div class="empty">Gegevens laden…</div>`; return; }
+    const t = currentTab();
+    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "uitnodigingen" ? viewInvites() : viewInfo();
+    const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
+    if(form && head) head.after(form);
+    autosize();
+  }
+  const isSearch = el => el && (el.id === "g-search" || el.id === "i-search");
+  function isEditing(){ const a = document.activeElement; return a && main.contains(a) && !isSearch(a) && a.matches("input:not([type=checkbox]),select,textarea"); }
+  function renderAll(force){
+    renderSummary();
+    renderSheet(document.activeElement && (document.activeElement.id === "sheet-q" || document.activeElement.id === "join-q"));
+    if(drag){ pending = true; return; }
+    if(!force && isEditing()){ pending = true; return; }
+    pending = false;
+    if(!force && isSearch(document.activeElement)){
+      const gl = document.getElementById("guest-list"); if(gl){ gl.innerHTML = guestRows(); return; }
+      const il = document.getElementById("inv-list"); if(il){ il.innerHTML = inviteCards(); return; }
+    }
+    renderTab();
+  }
+
+  // ---------- slepen (budget en taken) ----------
+  function budgetOrd(b){ return typeof b.volgorde === "number" ? b.volgorde : (b.created || 0); }
+  function sortTasks(list){
+    const mk = t => t.deadline ? t.deadline.slice(0,7) : "9999";
+    const vo = t => typeof t.volgorde === "number" ? t.volgorde : 1e9;
+    return list.sort((a,b) => {
+      if(!!a.done !== !!b.done) return a.done ? 1 : -1;
+      if(mk(a) !== mk(b)) return mk(a) < mk(b) ? -1 : 1;
+      if(vo(a) !== vo(b)) return vo(a) - vo(b);
+      const da = a.deadline || "9999", dbb = b.deadline || "9999";
+      return da < dbb ? -1 : da > dbb ? 1 : (a.created||0)-(b.created||0);
+    });
+  }
+  const lastDayOf = ym => { const [y,m] = ym.split("-").map(Number); return `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2,"0")}`; };
+  const monthLabel = ym => { const [y,m] = ym.split("-").map(Number); return new Date(y, m-1, 1).toLocaleDateString("nl-BE",{month:"long",year:"numeric"}); };
+  let drag = null, confirmDone = null;
+  function saveOrder(col, ids){
+    ids.forEach((id, i) => { const x = S[col].find(y => y.id === id); if(x && x.volgorde !== i + 1) write(col, id, { volgorde: i + 1 }); });
+  }
+  function saveBudgetOrder(ids){ saveOrder("budget", ids); }
+  main.addEventListener("pointerdown", e => {
+    const h = e.target.closest("[data-handle]"); if(!h || h.disabled || !S.canWrite || e.button > 0) return;
+    const item = h.closest("[data-row-id]"); if(!item) return;
+    e.preventDefault();
+    const box = item.parentNode;
+    drag = { kind: h.dataset.kind || "budget", item, box, startIds: [...box.querySelectorAll("[data-row-id]")].map(r => r.dataset.rowId) };
+    item.classList.add("dragging"); document.body.classList.add("is-dragging");
+    try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  main.addEventListener("pointermove", e => {
+    if(!drag) return;
+    e.preventDefault();
+    if(e.clientY < 70) window.scrollBy(0, -14); else if(e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const over = el && el.closest("[data-row-id], .group-h");
+    if(!over || over === drag.item || over.parentNode !== drag.box) return;
+    const r = over.getBoundingClientRect(), above = e.clientY < r.top + r.height / 2;
+    if(over.classList.contains("group-h")){
+      if(over.dataset.month === "__done") return;
+      if(above){ if(!over.previousElementSibling) return; drag.box.insertBefore(drag.item, over); }
+      else drag.box.insertBefore(drag.item, over.nextSibling);
+      return;
+    }
+    drag.box.insertBefore(drag.item, above ? over : over.nextSibling);
+  });
+  function endDrag(){
+    if(!drag) return;
+    const d = drag; drag = null;
+    d.item.classList.remove("dragging"); document.body.classList.remove("is-dragging");
+    const ids = [...d.box.querySelectorAll("[data-row-id]")].map(r => r.dataset.rowId);
+    const changed = ids.join() !== d.startIds.join();
+    if(d.kind === "task"){
+      let month = null, newMonth = null;
+      for(const el of d.box.children){ if(el.classList.contains("group-h")) month = el.dataset.month; else if(el === d.item){ newMonth = month; break; } }
+      const t = S.tasks.find(x => x.id === d.item.dataset.rowId);
+      let moved = false;
+      if(t && newMonth !== null && newMonth !== "__done"){
+        const cur = t.deadline ? t.deadline.slice(0,7) : "";
+        if(newMonth !== cur){ write("tasks", t.id, { deadline: newMonth ? lastDayOf(newMonth) : "" }); moved = true; toast(newMonth ? `Verplaatst naar ${monthLabel(newMonth)}` : "Uiterste datum verwijderd"); }
+      }
+      if(changed || moved){ saveOrder("tasks", ids); if(!moved) toast("Volgorde bewaard"); }
+    } else if(changed){ saveOrder("budget", ids); toast("Volgorde bewaard"); }
+    if(pending) renderAll();
+  }
+  main.addEventListener("pointerup", endDrag);
+  main.addEventListener("pointercancel", endDrag);
+  main.addEventListener("keydown", e => {
+    const h = e.target.closest("[data-handle]"); if(!h || !S.canWrite || h.dataset.kind === "task") return;
+    if(e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    const ids = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b)).map(b => b.id);
+    const i = ids.indexOf(h.dataset.handle), j = e.key === "ArrowUp" ? i - 1 : i + 1;
+    if(i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    const tr = h.closest("tr"), sib = e.key === "ArrowUp" ? tr.previousElementSibling : tr.nextElementSibling;
+    if(sib) tr.parentNode.insertBefore(tr, e.key === "ArrowUp" ? sib : sib.nextSibling);
+    h.focus();
+    saveBudgetOrder(ids);
+  });
+
+  // ---------- events ----------
+  main.addEventListener("focusout", () => { if(pending) setTimeout(() => { if(!isEditing()) renderAll(); }, 0); });
+  window.addEventListener("hashchange", () => renderAll(true));
+
+  main.addEventListener("input", e => {
+    if(isSearch(e.target)){ F.q = e.target.value; document.getElementById("guest-list").innerHTML = guestRows(); }
+    if(e.target.id === "i-search"){ FI.q = e.target.value; const il = document.getElementById("inv-list"); if(il) il.innerHTML = inviteCards(); }
+    if(e.target.matches("textarea.auto")){ e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }
+  });
+  main.addEventListener("change", e => {
+    const el = e.target;
+    if(el.id === "t-cat-filter"){ F.taskCat = el.value; renderTab(); return; }
+    if(el.dataset.setting){ saveSettings({ [el.dataset.setting]: el.value.trim() }); return; }
+    if(el.dataset.seat !== undefined){ if(el.value) write("guests", el.value, { tafel: el.dataset.seat }); el.blur(); return; }
+    const { col, id, f, t } = el.dataset; if(!col || !id || !f) return;
+    if(col === "tasks" && f === "done" && el.checked){
+      el.checked = false; confirmDone = id; renderTab();
+      const b = main.querySelector("[data-confirm-done]"); if(b) b.focus();
+      return;
+    }
+    let v = el.type === "checkbox" ? el.checked : el.value;
+    if(t === "int") v = Math.max(1, parseInt(v,10) || 1);
+    if(t === "money") v = parseMoney(v);
+    if(f === "status") el.dataset.v = v;
+    const patch = { [f]: v };
+    if(col === "guests" && f === "kind" && v === true){ patch.diner = false; patch.hoofdgerecht = ""; }
+    if(col === "guests" && f === "status" && v === "nee"){ patch.tafel = ""; patch.plaats = null; patch.definitief = false; }
+    write(col, id, patch);
+    if(el.tagName === "SELECT" || el.type === "checkbox") el.blur();
+  });
+  main.addEventListener("click", e => {
+    const spot = e.target.closest("[data-spot]");
+    if(spot){ onSpot(spot.dataset.spot); return; }
+    const pg = e.target.closest("[data-place-guest]");
+    if(pg){ T.placing = T.placing === pg.dataset.placeGuest ? null : pg.dataset.placeGuest; T.sel = null; T.moving = null; refreshTables(); return; }
+    const cap = e.target.closest("[data-cap]");
+    if(cap){
+      const t = S.tables.find(x => x.id === cap.dataset.cap); if(!t) return;
+      const n = Number(t.plaatsen) || 0, d = Number(cap.dataset.d);
+      if(d < 0){
+        if(n <= 1) return;
+        const g = seatMap().map[t.id + ":" + (n - 1)];
+        if(g){ toast(`De laatste plaats is bezet door ${firstName(g)}. Maak ze eerst vrij.`); return; }
+      }
+      write("tables", t.id, { plaatsen: Math.min(120, Math.max(1, n + d)) });
+      return;
+    }
+    if(invitesClick(e)) return;
+    const fb = e.target.closest("[data-fgrp]");
+    if(fb){ F[fb.dataset.fgrp] = fb.dataset.fval; renderTab(); return; }
+    if(e.target.closest("[data-burg]")){ F.burg = !F.burg; renderTab(); return; }
+    const cd = e.target.closest("[data-confirm-done]");
+    if(cd){ const id = cd.dataset.confirmDone; confirmDone = null; write("tasks", id, { done: true }); toast("Gemarkeerd als gedaan"); renderTab(); return; }
+    if(e.target.closest("[data-confirm-cancel]")){ confirmDone = null; renderTab(); return; }
+    const tv = e.target.closest("[data-tview]");
+    if(tv){ F.taskView = tv.dataset.tview; renderTab(); return; }
+    const un = e.target.closest("[data-unseat]");
+    if(un){ write("guests", un.dataset.unseat, { tafel: "" }); return; }
+    const del = e.target.closest("[data-del]");
+    if(del){
+      if(!del.classList.contains("armed")){
+        del.classList.add("armed"); del.textContent = "Zeker?";
+        setTimeout(() => { if(del.isConnected){ del.classList.remove("armed"); del.textContent = "Verwijder"; } }, 3000);
+        return;
+      }
+      const col = del.dataset.del, id = del.dataset.id;
+      if(col === "households") S.guests.filter(g => g.gezin === id).forEach(g => write("guests", g.id, { gezin: "" }));
+      if(col === "tables") S.guests.filter(g => g.tafel === id).forEach(g => write("guests", g.id, { tafel: "", plaats: null, definitief: false }));
+      remove(col, id);
+    }
+  });
+  main.addEventListener("submit", e => {
+    e.preventDefault();
+    const form = e.target, kind = form.dataset.add, fd = new FormData(form);
+    const txt = k => String(fd.get(k) || "").trim();
+    if(kind === "guests"){ if(!txt("voornaam")) return;
+      add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
+        email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
+    if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, opmerking:"" }); }
+    if(kind === "tasks"){ if(!txt("titel")) return; add("tasks", { titel: txt("titel"), categorie: txt("categorie"), deadline: txt("deadline"), wie: txt("wie")||"samen", done:false, leverancier:"", bedrag:0, opmerking:"", prioriteit:"" }); }
+    if(kind === "tables"){ if(!txt("naam")) return; add("tables", { naam: txt("naam"), plaatsen: Math.max(1, parseInt(fd.get("plaatsen"),10)||10) }); }
+    if(kind === "households"){ if(!txt("naam")) return; add("households", { naam: txt("naam"), code: newCode(), notitie: "", rsvp_op: "", rsvp_bericht: "" }); }
+    if(kind === "info"){ if(!txt("sectie") || !txt("label")) return; add("info", { sectie: txt("sectie"), label: txt("label"), waarde: txt("waarde"), volgorde: 1000 + S.info.length }); }
+    const first = form.querySelector("input[required]"); form.reset(); if(first) first.focus();
+  });
+  document.getElementById("partner-input").addEventListener("change", e => saveSettings({ partner: e.target.value.trim() }));
+
+  // ---------- start: aanmelden met de toegangscode ----------
+  const PIN_KEY = "tp_pin";
+  const loginEl = document.getElementById("login");
+  const syncEl = document.getElementById("sync-state");
+  const setSync = t => { syncEl.textContent = t; };
+  function storedPin(){ try{ return localStorage.getItem(PIN_KEY) || ""; }catch(_){ return ""; } }
+  function savePin(p){ try{ if(p) localStorage.setItem(PIN_KEY, p); else localStorage.removeItem(PIN_KEY); }catch(_){} }
+  function showLogin(msg){
+    loginEl.hidden = false;
+    document.getElementById("login-msg").textContent = msg || "";
+    setTimeout(() => { const i = document.getElementById("pin"); if(i) i.focus(); }, 50);
+  }
+  async function start(pin){
+    const btn = loginEl.querySelector("button[type=submit]");
+    btn.disabled = true; document.getElementById("login-msg").textContent = "Even geduld…";
+    let res;
+    try{ res = await TPApi.post(TPApi.apiUrl(), { action: "login", pin }); }
+    catch(e){ btn.disabled = false; showLogin(e && e.code === "not_configured" ? e.message : "Geen verbinding met de Google Sheet. Controleer je internet en probeer opnieuw."); return; }
+    btn.disabled = false;
+    if(!res.ok){
+      savePin("");
+      showLogin(res.error === "unauthorized" ? "Die toegangscode klopt niet (na 20 foute pogingen wacht je 10 minuten)." : "Er ging iets mis: " + (res.message || res.error));
+      return;
+    }
+    savePin(pin);
+    loginEl.hidden = true;
+    setSync("Laden…");
+    db = createApiDb({
+      pin,
+      onUnauthorized: () => { savePin(""); location.reload(); },
+      onSync: d => setSync("Bijgewerkt om " + d.toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" })),
+      onBusy: busy => { if(busy) setSync("Opslaan…"); },
+    });
+    const map = snap => snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    COLS.forEach(col => db.collection(col).onSnapshot(snap => { S.dbOk = true; S[col] = map(snap); renderAll(); }));
+    db.doc("meta/settings").onSnapshot(snap => { S.settings = Object.assign({}, snap.data()); renderAll(); });
+    try{ await db.load(); }
+    catch(e){ showNotice("De gegevens konden niet geladen worden. Controleer je internetverbinding en herlaad de app."); setSync("Niet verbonden"); }
+    db.startPolling(20000);
+    renderAll(true);
+  }
+  document.getElementById("login-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const p = document.getElementById("pin").value.trim();
+    if(p) start(p);
+  });
+  document.getElementById("logout").addEventListener("click", () => { savePin(""); location.reload(); });
+  renderSummary();
+  const firstPin = storedPin();
+  if(firstPin) start(firstPin); else showLogin();
+})();
+</script>
+</body>
+</html>
