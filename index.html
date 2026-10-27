@@ -149,6 +149,10 @@ tr.declined td{opacity:.6}
 .handle:disabled{opacity:.35;cursor:default}
 tr.dragging td{background:var(--blush-soft)}
 tr.dragging .handle{cursor:grabbing;color:var(--rasp)}
+.gnr{display:inline-flex;align-items:center;gap:0;white-space:nowrap}
+.guests .handle{padding:6px 4px;margin-left:-4px}
+.g-samen{justify-content:flex-end}
+.g-samen span{display:flex;align-items:center;gap:6px;font-weight:400;color:var(--ink);padding:8px 0}
 body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .del{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:5px 8px;border-radius:6px;font-size:13px;white-space:nowrap}
 .del:hover{color:var(--warn);background:var(--warn-soft)}
@@ -211,6 +215,7 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .task.done .title{text-decoration:line-through;color:var(--muted)}
 .task .flags{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .task.dragging{background:var(--blush-soft)}
+.guests tr.dragging td{background:var(--blush-soft)}
 .task .confirm{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--blush-soft);border-radius:8px;padding:8px 10px;font-size:14px}
 .task .confirm span{flex:1 1 200px;min-width:0}
 .group-h{padding:10px 12px 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);background:var(--bg)}
@@ -574,6 +579,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const daysUntil = iso => { if(!iso) return null; const [y,m,d] = iso.split("-").map(Number); return Math.round((new Date(y,m-1,d) - today())/864e5); };
   const fmtMonth = iso => { if(!iso) return ""; const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("nl-BE",{day:"numeric",month:"short",year:"numeric"}); };
   const partnerLabel = () => "Florence";
+  // Volgorde van de gastenlijst: kolom "volgorde" (versleepbaar, mag een kommagetal zijn), anders het gastnummer.
+  const guestRank = g => { const v = Number(g.volgorde); return g.volgorde !== "" && g.volgorde != null && isFinite(v) ? v : (Number(g.nr) || 9999); };
+  const guestsSorted = () => [...S.guests].sort((a,b) => guestRank(a) - guestRank(b) || (a.created||0) - (b.created||0));
   // Vergrendeling: zodra de uitnodigingen verstuurd zijn, mogen de QR-codes (gezinnen en hun code) nooit meer veranderen.
   const invitesLocked = () => !!String(S.settings.uitnodigingen_verstuurd || "").trim();
   const dis = () => S.canWrite ? "" : " disabled";
@@ -689,7 +697,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     // Burgerlijke trouw
     const burg = split(SEC_BURG);
     const burgFacts = burg.facts.concat((tasksBy["Burgerlijke trouw"] || []).map(taskFact));
-    const bg = S.guests.filter(g => g.burgerlijk && g.status !== "nee" && !isCouple(g)).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const bg = S.guests.filter(g => g.burgerlijk && g.status !== "nee" && !isCouple(g)).sort((a,b) => guestRank(a) - guestRank(b));
     const side = (via, title) => { const l = bg.filter(g => (g.via || "louis") === via); return l.length ? `<div class="gside"><h4>${title} <span>${l.length}</span></h4><ul>${l.map(g => `<li${isOpt(g) ? ' class="opt"' : ""}>${esc(gname(g))}</li>`).join("")}</ul></div>` : ""; };
     const burgCard = `<section class="ov-card ov-main">
         <div class="ov-h"><p class="eyebrow">Zaterdag 3 juli 2027</p><h3>Burgerlijke trouw</h3></div>
@@ -760,7 +768,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function guestRows(){
     const q = F.q.trim().toLowerCase();
     const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
-    const list = [...S.guests].sort((a,b) => (a.nr||9999) - (b.nr||9999) || (a.created||0)-(b.created||0)).filter(g =>
+    const all = guestsSorted(), pos = new Map(all.map((g, i) => [g.id, i + 1]));
+    const list = all.filter(g =>
       (F.via === "alle" || g.via === F.via) &&
       (F.status === "alle" || (F.status === "opt" ? isOpt(g) : (g.status||"open") === F.status)) &&
       (!F.burg || g.burgerlijk) &&
@@ -770,8 +779,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const yn = (g, f, l) => `<label title="${l}"><input type="checkbox" ${attrs("guests", g.id, f, 'data-t="bool" aria-label="' + l + '"')}${g[f] ? " checked" : ""}><span aria-hidden="true">${l[0]}</span></label>`;
     const rows = list.map(g => {
       const st = g.status || "open";
-      return `<tr class="${st==="nee"?"declined":""}">
-        <td class="nr">${esc(g.nr || "")}</td>
+      return `<tr class="${st==="nee"?"declined":""}" data-row-id="${esc(g.id)}">
+        <td class="nr"><span class="gnr"><button class="handle" data-handle="${esc(g.id)}" data-kind="guest" title="Sleep om te verplaatsen (of pijltjestoetsen)" aria-label="Verplaats ${esc(gname(g))}"${dis()}>⋮⋮</button>${pos.get(g.id)}</span></td>
         <td><input class="cell" ${attrs("guests", g.id, "voornaam", 'aria-label="Voornaam"')} value="${esc(g.voornaam)}"></td>
         <td><input class="cell" ${attrs("guests", g.id, "achternaam", 'aria-label="Achternaam"')} value="${esc(g.achternaam)}">${isOpt(g) ? `<span class="tag opt">optioneel</span>` : ""}</td>
         <td><select class="cell via" ${attrs("guests", g.id, "via", 'aria-label="Via"')}><option value="louis"${g.via==="louis"?" selected":""}>L</option><option value="florence"${g.via==="florence"?" selected":""}>${esc(partnerLabel()[0])}</option></select></td>
@@ -813,6 +822,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <label class="grow">Achternaam<input id="g-achternaam" name="achternaam"${dis()}></label>
         <label>Via<select id="g-via" name="via"${dis()}><option value="louis">Louis</option><option value="florence">${esc(partnerLabel())}</option></select></label>
         <label>Relatie<select id="g-relatie" name="relatie"${dis()}>${RELATIES.slice(0,5).map(r => `<option>${r}</option>`).join("")}</select></label>
+        <label>Plaats in de lijst<select id="g-onder" name="onder" style="max-width:240px"${dis()}><option value="">Onderaan</option>${guestsSorted().map((x, i) => `<option value="${esc(x.id)}">onder ${i + 1}. ${esc(gname(x))}</option>`).join("")}</select></label>
+        <label class="g-samen" hidden><span><input type="checkbox" id="g-samen" name="samen" checked${dis()}> Op dezelfde uitnodiging</span></label>
         <button class="btn" type="submit"${dis()}>Gast toevoegen</button>
       </form>`;
   }
@@ -1216,7 +1227,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function seatMap(){
     const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
     const byId = Object.fromEntries(tables.map(t => [t.id, t]));
-    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => (a.nr||9999)-(b.nr||9999));
+    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => guestRank(a) - guestRank(b));
     const map = {}, placed = new Set();
     coming.forEach(g => {
       const t = byId[g.tafel]; if(!t || typeof g.plaats !== "number") return;
@@ -1337,7 +1348,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function viewTablesOld(){
     const tables = [...S.tables].sort((a,b) => (a.created||0)-(b.created||0));
     const ids = new Set(tables.map(t => t.id));
-    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => (a.nr||9999)-(b.nr||9999));
+    const coming = S.guests.filter(g => g.status !== "nee").sort((a,b) => guestRank(a) - guestRank(b));
     const unplaced = coming.filter(g => !g.tafel || !ids.has(g.tafel));
     const seatsTotal = sum(tables, t => t.plaatsen);
     const opts = `<option value="">+ Gast aan deze tafel zetten…</option>` + unplaced.map(g => `<option value="${esc(g.id)}">${esc(gname(g))}</option>`).join("");
@@ -1411,8 +1422,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const STATUS_TXT = { ja:"komt", nee:"komt niet", open:"nog geen antwoord" };
 
   // Volgorde binnen een gezin: kolom gezin_volgorde (zelf versleept), anders het gastnummer.
-  const memberRank = g => { const v = Number(g.gezin_volgorde); return g.gezin_volgorde !== "" && g.gezin_volgorde != null && isFinite(v) && v > 0 ? v : 1e6 + (Number(g.nr) || 9999); };
-  const memberOrder = (a, b) => memberRank(a) - memberRank(b) || (a.nr||9999) - (b.nr||9999);
+  const memberRank = g => { const v = Number(g.gezin_volgorde); return g.gezin_volgorde !== "" && g.gezin_volgorde != null && isFinite(v) && v > 0 ? v : 1e6 + guestRank(g); };
+  const memberOrder = (a, b) => memberRank(a) - memberRank(b) || guestRank(a) - guestRank(b);
   function saveMemberOrder(hid, ids){
     ids.forEach((id, i) => { const g = S.guests.find(x => x.id === id); if(g && Number(g.gezin_volgorde) !== i + 1) write("guests", id, { gezin_volgorde: i + 1 }); });
     renameHousehold(hid);
@@ -1498,7 +1509,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const n = s => people.filter(g => (g.status || "open") === s).length;
     const yes = people.filter(g => g.status === "ja");
     const hg = h => yes.filter(g => g.diner && g.hoofdgerecht === h).length;
-    const loose = S.guests.filter(g => !g.gezin && !isCouple(g)).sort((a,b) => (a.nr||9999) - (b.nr||9999));
+    const loose = S.guests.filter(g => !g.gezin && !isCouple(g)).sort((a,b) => guestRank(a) - guestRank(b));
     const chip = (k, l, c) => `<button class="chip-btn" data-ifilter="${k}" aria-pressed="${FI.filter === k}">${l} ${c}</button>`;
     const field = ([k, label, type, ph]) => `<label${type === "textarea" ? ' style="grid-column:1 / -1"' : ""}>${esc(label)}${type === "textarea"
       ? `<textarea id="set-${k}" data-setting="${k}" rows="3" placeholder="${esc(ph)}"${dis()}>${esc(S.settings[k] || "")}</textarea>`
@@ -1570,7 +1581,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     sheet.hidden = false; document.body.classList.add("sheet-open");
     const q = J.q.trim().toLowerCase();
     const list = S.guests.filter(g => g.gezin !== h.id && !isCouple(g) && (!q || gname(g).toLowerCase().includes(q)))
-      .sort((a,b) => (a.gezin ? 1 : 0) - (b.gezin ? 1 : 0) || (a.nr||9999) - (b.nr||9999));
+      .sort((a,b) => (a.gezin ? 1 : 0) - (b.gezin ? 1 : 0) || guestRank(a) - guestRank(b));
     const listHtml = list.length ? list.map(g => `<button data-join-pick="${esc(g.id)}"${dis()}><span>${esc(gname(g))}</span><small>${g.gezin ? "nu bij " + esc(hname(g.gezin)) : "nog geen gezin"}</small></button>`).join("")
       : `<p class="meta" style="padding:10px 12px">Geen gast gevonden.</p>`;
     if(listOnly){ const gl = sheet.querySelector(".glist"); if(gl){ gl.innerHTML = listHtml; return; } }
@@ -1693,6 +1704,31 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     ids.forEach((id, i) => { const x = S[col].find(y => y.id === id); if(x && x.volgorde !== i + 1) write(col, id, { volgorde: i + 1 }); });
   }
   function saveBudgetOrder(ids){ saveOrder("budget", ids); }
+  // Gast verplaatsen: enkel zijn eigen kolom "volgorde" verandert (midden tussen de buren), de andere gasten blijven ongemoeid.
+  function rankAfter(prevId, selfId){
+    const list = guestsSorted().filter(g => g.id !== selfId), i = list.findIndex(g => g.id === prevId);
+    if(i < 0) return null;
+    const a = guestRank(list[i]), b = list[i + 1] ? guestRank(list[i + 1]) : a + 2;
+    return a < b ? (a + b) / 2 : null;
+  }
+  function rankBefore(nextId, selfId){
+    const list = guestsSorted().filter(g => g.id !== selfId), i = list.findIndex(g => g.id === nextId);
+    if(i < 0) return null;
+    const b = guestRank(list[i]), a = i > 0 ? guestRank(list[i - 1]) : b - 2;
+    return a < b ? (a + b) / 2 : null;
+  }
+  function placeGuest(id, prevId, nextId){
+    let r = prevId ? rankAfter(prevId, id) : nextId ? rankBefore(nextId, id) : null;
+    if(r === null && (prevId || nextId)){
+      // Gelijke nummers: hele lijst één keer hernummeren en dan opnieuw plaatsen.
+      const list = guestsSorted().filter(g => g.id !== id);
+      let at = prevId ? list.findIndex(g => g.id === prevId) + 1 : list.findIndex(g => g.id === nextId);
+      const g = S.guests.find(x => x.id === id); list.splice(Math.max(0, at), 0, g);
+      list.forEach((x, i) => { if(guestRank(x) !== i + 1 || x.volgorde === "" || x.volgorde == null) write("guests", x.id, { volgorde: i + 1 }); });
+      return;
+    }
+    if(r !== null) write("guests", id, { volgorde: r });
+  }
   main.addEventListener("pointerdown", e => {
     const h = e.target.closest("[data-handle]"); if(!h || h.disabled || !S.canWrite || e.button > 0) return;
     const item = h.closest("[data-row-id]"); if(!item) return;
@@ -1734,6 +1770,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         if(newMonth !== cur){ write("tasks", t.id, { deadline: newMonth ? lastDayOf(newMonth) : "" }); moved = true; toast(newMonth ? `Verplaatst naar ${monthLabel(newMonth)}` : "Uiterste datum verwijderd"); }
       }
       if(changed || moved){ saveOrder("tasks", ids); if(!moved) toast("Volgorde bewaard"); }
+    } else if(d.kind === "guest"){
+      if(changed){
+        const rows = [...d.box.querySelectorAll("[data-row-id]")], i = rows.indexOf(d.item);
+        placeGuest(d.item.dataset.rowId, rows[i - 1] ? rows[i - 1].dataset.rowId : null, rows[i + 1] ? rows[i + 1].dataset.rowId : null);
+        toast("Volgorde bewaard");
+      }
     } else if(d.kind === "member"){
       if(changed){ const g = S.guests.find(x => x.id === d.item.dataset.rowId); if(g && g.gezin) saveMemberOrder(g.gezin, ids); toast("Volgorde in het gezin bewaard"); }
     } else if(changed){ saveOrder("budget", ids); toast("Volgorde bewaard"); }
@@ -1745,6 +1787,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const h = e.target.closest("[data-handle]"); if(!h || !S.canWrite || h.dataset.kind === "task") return;
     if(e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
     e.preventDefault();
+    if(h.dataset.kind === "guest"){
+      const tr = h.closest("tr"), id = h.dataset.handle;
+      const rows = [...tr.parentNode.querySelectorAll("[data-row-id]")], i = rows.indexOf(tr), up = e.key === "ArrowUp";
+      const j = up ? i - 1 : i + 1; if(j < 0 || j >= rows.length) return;
+      const rid = k => rows[k] ? rows[k].dataset.rowId : null;
+      if(up) placeGuest(id, rid(i - 2), rid(i - 1)); else placeGuest(id, rid(i + 1), rid(i + 2));
+      const nh = main.querySelector(`[data-handle="${CSS.escape(id)}"]`); if(nh) nh.focus();
+      return;
+    }
     if(h.dataset.kind === "member"){
       const li = h.closest("li"), sib = e.key === "ArrowUp" ? li.previousElementSibling : li.nextElementSibling;
       if(!sib) return;
@@ -1784,6 +1835,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const el = e.target;
     if(el.id === "t-cat-filter"){ F.taskCat = el.value; renderTab(); return; }
     if(el.id === "g-rel-filter"){ F.rel = el.value; renderTab(); return; }
+    if(el.id === "g-onder"){
+      const a = S.guests.find(x => x.id === el.value), form = el.closest("form");
+      if(a){ form.querySelector("#g-via").value = a.via || "louis"; if(RELATIES.slice(0,5).includes(a.relatie)) form.querySelector("#g-relatie").value = a.relatie; }
+      const box = form.querySelector(".g-samen"); box.hidden = !(a && a.gezin);
+      if(a && a.gezin){ const h = S.households.find(x => x.id === a.gezin); box.querySelector("span").lastChild.textContent = ` Op dezelfde uitnodiging${h ? " (" + h.naam + ")" : ""}`; }
+      return;
+    }
     if(el.id === "q-lev-filter"){ FQ.lev = el.value; renderTab(); return; }
     if(el.dataset.setting){ saveSettings({ [el.dataset.setting]: el.value.trim() }); return; }
     if(el.dataset.seat !== undefined){ if(el.value) write("guests", el.value, { tafel: el.dataset.seat }); el.blur(); return; }
@@ -1871,8 +1929,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(form.dataset.voorstel){ const t = String(fd.get("tekst") || "").trim(); if(!t) return; addVoorstel(form.dataset.voorstel, t); form.reset(); const i = form.querySelector("input"); if(i) i.blur(); renderAll(); return; }
     const txt = k => String(fd.get(k) || "").trim();
     if(kind === "guests"){ if(!txt("voornaam")) return;
-      add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
-        email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
+      const anchor = S.guests.find(x => x.id === txt("onder")), hid = anchor && anchor.gezin && fd.get("samen") ? anchor.gezin : "";
+      add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, ...(anchor ? { volgorde: rankAfter(anchor.id, null) } : {}), ...(hid ? { gezin: hid, gezin_volgorde: "" } : {}), voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
+        email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" });
+      if(hid){ const n = renameHousehold(hid); toast(`${txt("voornaam")} toegevoegd onder ${gname(anchor)}, op de uitnodiging ${n}`); }
+      else if(anchor) toast(`${txt("voornaam")} toegevoegd onder ${gname(anchor)}`);
+      const box = form.querySelector(".g-samen"); if(box) box.hidden = true; }
     if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, eigen:false, opmerking:"" }); }
     if(kind === "orders"){ if(!txt("wat")) return;
       add("orders", { wat: txt("wat"), bij: txt("bij"), besteld_op: txt("besteld_op"), toegekomen: false, toegekomen_op: "", opmerking: "" });
