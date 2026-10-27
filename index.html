@@ -108,7 +108,7 @@ main{display:flex;flex-direction:column;gap:16px;min-height:200px}
 
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 table{border-collapse:collapse;width:100%}
-.guests table{min-width:990px}.budget table{min-width:760px}
+.guests table{min-width:990px}.budget table{min-width:880px}
 th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 6px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
 td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:last-child td{border-bottom:none}
@@ -232,6 +232,40 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .confirm .ov-fields label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
 .confirm .ov-fields input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-weight:400;font-size:14px;color:var(--ink)}
 @media (max-width:720px){ .task.check-row{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:none} .task.check-row>*{grid-area:auto!important} .confirm .ov-fields{grid-template-columns:1fr} }
+/* Budget: btw en kost per gast */
+.w-vat{width:118px}
+.w-vat select{font-size:13px}
+.vat-incl{display:block;font-size:11.5px;color:var(--muted);padding:0 6px 3px;white-space:nowrap}
+.cost-card{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--rasp);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.cost-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:flex-start}
+.cost-head h3{margin:0;font-family:var(--display);font-weight:400;font-size:22px;color:var(--plum)}
+.cost-head .meta{margin:2px 0 0;font-size:13px}
+.cost-big{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.cost-big b{font-size:28px;font-weight:600;color:var(--plum);font-variant-numeric:tabular-nums}
+.cost-big span{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.cost-split{width:100%}
+.cost-split th{position:static}
+.cost-split td{padding:8px 6px}
+.cost-split td small{display:block;font-size:12.5px;color:var(--muted)}
+.cost-split td b{font-weight:600}
+.cost-split td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Opvolging */
+.orders{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.order{display:grid;grid-template-columns:22px minmax(0,1fr) 170px 150px 120px auto;gap:8px;align-items:start;padding:8px 10px;border-bottom:1px solid var(--line)}
+.order:last-child{border-bottom:none}
+.order input[type=checkbox]{margin-top:8px}
+.obody{display:flex;flex-direction:column;min-width:0}
+.obody textarea{resize:none;overflow:hidden;line-height:1.4}
+.obody .ow{font-weight:500}
+.obody .onote{font-size:13.5px;color:var(--muted);padding-top:0}
+.order.done .ow{text-decoration:line-through;color:var(--muted);font-weight:400}
+.odate{display:flex;flex-direction:column;font-size:11px;color:var(--muted)}
+.odate small{padding-left:7px}
+.ostate{padding-top:6px}
+@media (max-width:760px){
+  .order{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c b d" ". bij bij" ". dt st"}
+  .order>input[type=checkbox]{grid-area:c}.order .obody{grid-area:b}.order .obij{grid-area:bij}.order .odate{grid-area:dt}.order .ostate{grid-area:st}.order>.del{grid-area:d}
+}
 /* Vragen */
 .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;align-items:start}
 .qgrid.single{grid-template-columns:1fr}
@@ -457,6 +491,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <a href="#budget" data-tab="budget">Budget<span class="n" id="n-budget"></span></a>
     <a href="#taken" data-tab="taken">Taken<span class="n" id="n-taken"></span></a>
     <a href="#vragen" data-tab="vragen">Vragen<span class="n" id="n-vragen"></span></a>
+    <a href="#opvolging" data-tab="opvolging">Opvolging<span class="n" id="n-opvolging"></span></a>
     <a href="#tafels" data-tab="tafels">Tafelschikking<span class="n" id="n-tafels"></span></a>
     <a href="#uitnodigingen" data-tab="uitnodigingen">Uitnodigingen<span class="n" id="n-uitn"></span></a>
   </nav>
@@ -474,10 +509,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 (function(){
   const WEDDING = new Date(2027, 6, 10);
-  const TABS = ["overzicht","gasten","budget","taken","vragen","tafels","uitnodigingen"];
-  const COLS = ["guests","households","budget","tasks","tables","info","questions"];
-  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], settings:{}, canWrite:true, dbOk:null };
-  const F = { q:"", via:"alle", status:"alle", burg:false, taskView:"open", taskCat:"" };
+  const TABS = ["overzicht","gasten","budget","taken","vragen","opvolging","tafels","uitnodigingen"];
+  const COLS = ["guests","households","budget","tasks","tables","info","questions","orders"];
+  const S = { guests:[], households:[], budget:[], tasks:[], tables:[], info:[], questions:[], orders:[], settings:{}, canWrite:true, dbOk:null };
+  const F = { q:"", via:"alle", status:"alle", burg:false, rel:"", taskView:"open", taskCat:"" };
   let db = null, pending = false;
   const main = document.getElementById("main");
   const RELATIES = ["Familie","Ouders","Vrienden","Collega","Kennis","Bruid","Bruidegom"];
@@ -509,7 +544,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const code = e && e.code;
     if(code === "unauthorized") return; // de app vraagt de code opnieuw
     if(code === "not_configured") toast(e.message);
-    else if(e && e.message === "unknown_collection") toast("Werk eerst het script (Code.gs) bij, dan kan je vragen bewaren.");
+    else if(e && e.message === "unknown_collection") toast("Werk eerst het script (Code.gs) bij, dan kan je dit bewaren.");
     else if(e && e.message === "locked") toast("De uitnodigingen zijn verstuurd: dit kan niet meer gewijzigd worden.");
     else toast("Opslaan lukte niet. Controleer je internetverbinding; de gegevens worden opnieuw geladen.");
     console.error(e);
@@ -545,9 +580,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("s-guests-foot").textContent = `${opt} optionele +1 · ${no} afgezegd`;
     setBar("s-guests-bar", counted.length ? yes/counted.length*100 : 0);
 
-    const est = sum(S.budget, b => b.geraamd), fixed = sum(S.budget.filter(b => b.vastgelegd), b => b.geraamd);
+    const est = sum(S.budget, b => inclVat(b, b.geraamd)), fixed = sum(S.budget.filter(b => b.vastgelegd), b => inclVat(b, b.geraamd));
     document.getElementById("s-budget").innerHTML = `${eur(fixed)} <small>van ${eur(est)}</small>`;
-    const real = sum(S.budget, b => b.werkelijk);
+    const real = sum(S.budget, b => inclVat(b, b.werkelijk));
     document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
     setBar("s-budget-bar", est ? fixed/est*100 : 0);
 
@@ -563,6 +598,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.getElementById("n-taken").textContent = S.tasks.filter(t => !t.done).length || "";
     document.getElementById("n-tafels").textContent = S.tables.length || "";
     document.getElementById("n-vragen").textContent = S.questions.filter(q => !q.beantwoord).length || "";
+    document.getElementById("n-opvolging").textContent = S.orders.filter(o => !o.toegekomen).length || "";
     document.getElementById("n-uitn").textContent = S.households.filter(h => !h.rsvp_op).length || "";
     document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === currentTab() ? "page" : "false"));
   }
@@ -681,6 +717,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       (F.via === "alle" || g.via === F.via) &&
       (F.status === "alle" || (F.status === "opt" ? isOpt(g) : (g.status||"open") === F.status)) &&
       (!F.burg || g.burgerlijk) &&
+      (!F.rel || g.relatie === F.rel) &&
       (!q || gname(g).toLowerCase().includes(q) || (g.relatie||"").toLowerCase().includes(q)));
     if(!list.length) return `<div class="empty">${S.guests.length ? "Geen gasten die aan deze filter voldoen." : "Nog geen gasten. Voeg hierboven de eerste toe."}</div>`;
     const yn = (g, f, l) => `<label title="${l}"><input type="checkbox" ${attrs("guests", g.id, f, 'data-t="bool" aria-label="' + l + '"')}${g[f] ? " checked" : ""}><span aria-hidden="true">${l[0]}</span></label>`;
@@ -721,6 +758,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <span class="sep" aria-hidden="true"></span>
         <div class="chips">${chip("status","alle","Alle",c.alle)}${chip("status","ja","Komt",c.ja)}${chip("status","open","Geen antwoord",c.open)}${chip("status","nee","Komt niet",c.nee)}${chip("status","opt","Optioneel",c.opt)}
           <button class="chip-btn" data-burg aria-pressed="${F.burg}">Burgerlijke trouw</button></div>
+        <select id="g-rel-filter" class="search" style="flex:0 1 200px" aria-label="Filter op relatie"><option value="">Alle relaties</option>${RELATIES.map(r => `<option value="${r}"${F.rel===r?" selected":""}>${r} (${g.filter(x=>x.relatie===r).length})</option>`).join("")}</select>
       </div>
       <div id="guest-list">${guestRows()}</div>
       <form class="add" data-add="guests">
@@ -733,9 +771,44 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
 
   // ---------- budget ----------
+  // Btw per post: leeg = bedrag is incl. btw; "21", "12" of "6" = bedrag is excl. dat tarief. Totalen zijn altijd incl. btw.
+  const VAT = { "21":0.21, "12":0.12, "6":0.06 };
+  const vatRate = b => VAT[String(b.btw || "")] || 0;
+  const inclVat = (b, v) => Math.round((Number(v) || 0) * (1 + vatRate(b)) * 100) / 100;
+  const postCost = b => inclVat(b, Number(b.werkelijk) ? b.werkelijk : b.geraamd);
+  // Wie betaalt welke gast: familie en vrienden van de ouders (relatie Familie / Ouders) betalen de ouders van die kant, de rest betalen jullie.
+  const BG = { basis:"uitgenodigd" };
+  function payerOf(g){
+    if(g.relatie === "Familie" || g.relatie === "Ouders") return g.via === "florence" ? "chantal" : "ouders_louis";
+    return "koppel";
+  }
+  function costSplit(){
+    const guests = S.guests.filter(g => BG.basis === "bevestigd" ? g.status === "ja" : g.status !== "nee");
+    const total = Math.round(sum(S.budget, postCost) * 100) / 100, n = guests.length, per = n ? total / n : 0;
+    const groups = [
+      { k:"koppel", naam:"Florence & Louis", wie:"vrienden, collega's, kennissen en jullie twee" },
+      { k:"ouders_louis", naam:"Ouders Louis", wie:"familie en vrienden van de ouders, kant Louis" },
+      { k:"chantal", naam:"Chantal", wie:"familie en vrienden van de ouders, kant Florence" },
+    ].map(x => { const c = guests.filter(g => payerOf(g) === x.k).length; return Object.assign(x, { n: c, bedrag: c * per }); });
+    return { total, n, per, groups };
+  }
+  function costCard(){
+    const c = costSplit();
+    const bchip = (k, l) => `<button class="chip-btn" data-bbasis="${k}" aria-pressed="${BG.basis === k}">${l}</button>`;
+    return `<section class="cost-card">
+        <div class="cost-head"><div><h3>Kost per gast</h3><p class="meta">Totaal incl. btw (werkelijk waar ingevuld, anders geraamd) gedeeld door het aantal gasten</p></div>
+          <div class="chips">${bchip("uitgenodigd", "Alle uitgenodigden")}${bchip("bevestigd", "Enkel bevestigd")}</div></div>
+        <div class="cost-big"><b>${c.n ? eur2(c.per) : "—"}</b><span>${eur2(c.total)} ÷ ${c.n} gasten</span></div>
+        <table class="cost-split"><thead><tr><th>Wie betaalt</th><th class="num">Gasten</th><th class="num">Bedrag</th></tr></thead>
+          <tbody>${c.groups.map(g => `<tr><td><b>${g.naam}</b><small>${g.wie}</small></td><td class="num">${g.n}</td><td class="num">${eur2(g.bedrag)}</td></tr>`).join("")}</tbody>
+          <tfoot><tr><td>Totaal</td><td class="num">${c.n}</td><td class="num">${eur2(c.groups.reduce((a, g) => a + g.bedrag, 0))}</td></tr></tfoot></table>
+        <p class="meta" style="margin:0">${BG.basis === "uitgenodigd" ? "Alle gasten zonder afzegging, ook de optionele +1's." : "Enkel gasten die bevestigd hebben."} Kinderen tellen als volledige gast. Wie welke gast betaalt, volgt de relatie en de kant (Via) in Gasten.</p>
+      </section>`;
+  }
   function viewBudget(){
     const list = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b));
-    const est = sum(list, b => b.geraamd), real = sum(list, b => b.werkelijk), fixed = sum(list.filter(b => b.vastgelegd), b => b.geraamd);
+    const est = sum(list, b => inclVat(b, b.geraamd)), real = sum(list, b => inclVat(b, b.werkelijk)), fixed = sum(list.filter(b => b.vastgelegd), b => inclVat(b, b.geraamd));
+    const vatSel = b => `<select class="cell btw" ${attrs("budget", b.id, "btw", 'aria-label="Btw"')}>${[["","incl."],["21","excl. 21%"],["12","excl. 12%"],["6","excl. 6%"]].map(([v,l]) => `<option value="${v}"${String(b.btw||"")===v?" selected":""}>${l}</option>`).join("")}</select>`;
     const rows = list.map(b => {
       const diff = b.werkelijk ? (Number(b.werkelijk)||0) - (Number(b.geraamd)||0) : null;
       return `<tr data-row-id="${esc(b.id)}">
@@ -743,6 +816,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <td><input class="cell" ${attrs("budget", b.id, "post", 'aria-label="Post"')} value="${esc(b.post)}"></td>
         <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "geraamd", 'data-t="money" aria-label="Geraamd"')} value="${esc(moneyIn(b.geraamd))}" placeholder="0"></td>
         <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "werkelijk", 'data-t="money" aria-label="Werkelijk"')} value="${esc(moneyIn(b.werkelijk))}" placeholder="—"></td>
+        <td class="w-vat">${vatSel(b)}${vatRate(b) ? `<small class="vat-incl">incl. ${eur2(postCost(b))}</small>` : ""}</td>
         <td class="num" style="color:${diff===null?"var(--muted)":diff>0?"var(--warn)":"var(--ok)"}">${diff===null?"—":(diff>0?"+":"")+eur2(diff)}</td>
         <td class="c"><input type="checkbox" ${attrs("budget", b.id, "vastgelegd", 'data-t="bool" aria-label="Vastgelegd"')}${b.vastgelegd?" checked":""}></td>
         <td><input class="cell" ${attrs("budget", b.id, "opmerking", 'aria-label="Opmerking"')} value="${esc(b.opmerking)}" placeholder="—"></td>
@@ -751,10 +825,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     return `
       <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)}</span></div>
       ${list.length ? `<div class="scroll budget"><table>
-        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th>Opmerking</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th>Opmerking</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr><td></td><td>Totaal</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td colspan="2"></td></tr></tfoot>
-        </table></div>` : `<div class="empty">Nog geen budgetposten. Voeg hierboven de eerste toe.</div>`}
+        <tfoot><tr><td></td><td>Totaal incl. btw</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td></td><td colspan="2"></td></tr></tfoot>
+        </table></div>${costCard()}` : `<div class="empty">Nog geen budgetposten. Voeg hierboven de eerste toe.</div>`}
       <form class="add" data-add="budget">
         <label class="grow">Post<input id="b-post" name="post" required placeholder="bv. Champagne"${dis()}></label>
         <label>Geraamd (€)<input id="b-geraamd" name="geraamd" inputmode="decimal" placeholder="0" style="width:120px"${dis()}></label>
@@ -835,6 +909,42 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <label>Wie<select id="t-wie" name="wie"${dis()}>${who("samen")}</select></label>
         <button class="btn" type="submit"${dis()}>Taak toevoegen</button>
       </form>`;
+  }
+
+  // ---------- opvolging: wat besteld is en of het al toegekomen is ----------
+  const FO = { view:"onderweg" };
+  const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+  const shortDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m ? `${+m[3]}/${+m[2]}` : ""; };
+  function viewOrders(){
+    const os = S.orders;
+    const cnt = { onderweg: os.filter(o => !o.toegekomen).length, toegekomen: os.filter(o => o.toegekomen).length, alle: os.length };
+    const list = os.filter(o => FO.view === "alle" || (FO.view === "toegekomen" ? o.toegekomen : !o.toegekomen))
+      .sort((a,b) => (!!a.toegekomen - !!b.toegekomen) || String(a.besteld_op || "9999").localeCompare(String(b.besteld_op || "9999")) || (Number(a.created)||0) - (Number(b.created)||0));
+    const chip = (k, l) => `<button class="chip-btn" data-oview="${k}" aria-pressed="${FO.view === k}">${l} ${cnt[k]}</button>`;
+    const known = [...new Set(os.map(o => String(o.bij || "").trim()).concat(S.tasks.map(t => String(t.leverancier || "").trim())).filter(Boolean))].sort((a,b) => a.localeCompare(b, "nl"));
+    const notReady = db && db.has && !db.has("orders");
+    const rows = list.map(o => `<div class="order${o.toegekomen ? " done" : ""}">
+        <input type="checkbox" ${attrs("orders", o.id, "toegekomen", 'data-t="bool" aria-label="Toegekomen"')}${o.toegekomen ? " checked" : ""}>
+        <div class="obody">
+          <textarea class="cell auto ow" rows="1" ${attrs("orders", o.id, "wat", 'aria-label="Wat"')}>${esc(o.wat)}</textarea>
+          <textarea class="cell auto onote" rows="1" placeholder="Opmerking, bestelnummer, track & trace…" ${attrs("orders", o.id, "opmerking", 'aria-label="Opmerking"')}>${esc(o.opmerking)}</textarea>
+        </div>
+        <input class="cell obij" ${attrs("orders", o.id, "bij", 'aria-label="Bij" list="o-bij"')} value="${esc(o.bij)}" placeholder="Bij…">
+        <label class="odate"><small>Besteld</small><input class="cell" type="date" ${attrs("orders", o.id, "besteld_op", 'aria-label="Besteld op"')} value="${esc(o.besteld_op || "")}"></label>
+        <span class="ostate">${o.toegekomen ? `<span class="tag ok">Toegekomen${o.toegekomen_op ? " " + esc(shortDate(o.toegekomen_op)) : ""}</span>` : `<span class="tag soon">Onderweg</span>`}</span>
+        ${delBtn("orders", o.id)}</div>`).join("");
+    return `
+      <div class="panel-head"><h2>Opvolging</h2><span class="meta">Wat besteld is en of het al toegekomen is</span></div>
+      ${notReady ? `<div class="notice">Het script kent dit tabblad nog niet. Plak de nieuwste Code.gs en implementeer een nieuwe versie.</div>` : ""}
+      <form class="add" data-add="orders">
+        <label class="grow">Wat<input name="wat" required placeholder="bv. Trouwringen, 60 naamkaartjes"${dis()}></label>
+        <label>Bij<input name="bij" list="o-bij" placeholder="bv. juwelier" style="width:170px"${dis()}></label>
+        <label>Besteld op<input name="besteld_op" type="date" value="${todayIso()}"${dis()}></label>
+        <button class="btn" type="submit"${dis()}>Toevoegen</button>
+      </form>
+      <datalist id="o-bij">${known.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+      <div class="toolbar"><div class="chips">${chip("onderweg", "Onderweg")}${chip("toegekomen", "Toegekomen")}${chip("alle", "Alle")}</div></div>
+      ${list.length ? `<div class="orders">${rows}</div>` : `<div class="empty">${os.length ? "Niets in deze weergave." : "Nog niets besteld. Voeg hierboven de eerste bestelling toe."}</div>`}`;
   }
 
   // ---------- vragen per leverancier ----------
@@ -1321,7 +1431,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   function renderTab(){
     if(S.dbOk === null){ main.innerHTML = `<div class="empty">Gegevens laden…</div>`; return; }
     const t = currentTab();
-    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "uitnodigingen" ? viewInvites() : viewInfo();
+    main.innerHTML = t === "gasten" ? viewGuests() : t === "budget" ? viewBudget() : t === "taken" ? viewTasks() : t === "tafels" ? viewTables() : t === "vragen" ? viewQuestions() : t === "opvolging" ? viewOrders() : t === "uitnodigingen" ? viewInvites() : viewInfo();
     const form = main.querySelector("form.add"), head = main.querySelector(".panel-head");
     if(form && head) head.after(form);
     const lb = main.querySelector(".lockbar"); if(lb && head) head.after(lb);
@@ -1452,6 +1562,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   main.addEventListener("change", e => {
     const el = e.target;
     if(el.id === "t-cat-filter"){ F.taskCat = el.value; renderTab(); return; }
+    if(el.id === "g-rel-filter"){ F.rel = el.value; renderTab(); return; }
     if(el.id === "q-lev-filter"){ FQ.lev = el.value; renderTab(); return; }
     if(el.dataset.setting){ saveSettings({ [el.dataset.setting]: el.value.trim() }); return; }
     if(el.dataset.seat !== undefined){ if(el.value) write("guests", el.value, { tafel: el.dataset.seat }); el.blur(); return; }
@@ -1467,11 +1578,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(f === "status") el.dataset.v = v;
     const patch = { [f]: v };
     if(col === "guests" && f === "kind" && v === true){ patch.diner = false; patch.hoofdgerecht = ""; }
+    if(col === "orders" && f === "toegekomen") patch.toegekomen_op = v ? todayIso() : "";
     if(col === "guests" && f === "status" && v === "nee"){ patch.tafel = ""; patch.plaats = null; patch.definitief = false; }
     write(col, id, patch);
     if(el.tagName === "SELECT" || el.type === "checkbox") el.blur();
   });
   main.addEventListener("click", e => {
+    const bb = e.target.closest("[data-bbasis]"); if(bb){ BG.basis = bb.dataset.bbasis; renderTab(); return; }
+    const ov = e.target.closest("[data-oview]"); if(ov){ FO.view = ov.dataset.oview; renderTab(); return; }
     const qv = e.target.closest("[data-qview]"); if(qv){ FQ.view = qv.dataset.qview; renderTab(); return; }
     if(e.target.closest("[data-ov-edit]")){ OV.edit = true; renderTab(); return; }
     if(e.target.closest("[data-ov-done]")){ OV.edit = false; renderTab(); return; }
@@ -1534,6 +1648,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       add("guests", { nr: Math.max(0, ...S.guests.map(g => Number(g.nr)||0)) + 1, voornaam: txt("voornaam"), achternaam: txt("achternaam"), via: txt("via")||"louis", relatie: txt("relatie")||"Vrienden",
         email:"", telefoon:"", adres:"", burgerlijk:false, status:"open", ceremonie:null, receptie:null, diner:null, hoofdgerecht:"", dieet:"", opmerking:"", optioneel:false, tafel:"" }); }
     if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, opmerking:"" }); }
+    if(kind === "orders"){ if(!txt("wat")) return;
+      add("orders", { wat: txt("wat"), bij: txt("bij"), besteld_op: txt("besteld_op"), toegekomen: false, toegekomen_op: "", opmerking: "" });
+      form.reset(); const d = form.querySelector('[name="besteld_op"]'); if(d) d.value = todayIso(); const w = form.querySelector('[name="wat"]'); if(w) w.focus(); return; }
     if(kind === "questions"){ if(!txt("vraag")) return; const lev = txt("leverancier") || "Algemeen";
       FQ.lastLev = lev;
       add("questions", { leverancier: lev, vraag: txt("vraag"), antwoord: "", beantwoord: false, volgorde: "" }); const v = form.querySelector('[name="vraag"]'); if(v){ v.value = ""; v.focus(); } return; }
