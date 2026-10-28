@@ -422,6 +422,11 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .seat.free{background:var(--seat-free);color:var(--seat-free-ink);border-color:var(--seat-free-line);font-weight:500}
 .seat:hover{filter:brightness(1.06)}
 .seat.sel{outline:3px solid var(--plum);outline-offset:2px}
+.seat,.unplaced .pills .pill{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.seat.lift{opacity:.35}
+.seat.drop{outline:3px dashed var(--plum);outline-offset:2px;filter:brightness(1.1)}
+.seat.nodrop{outline:3px dashed var(--warn);outline-offset:2px}
+.seat-ghost{position:fixed;left:0;top:0;z-index:40;pointer-events:none;height:32px;line-height:32px;border-radius:16px;padding:0 14px;font-size:13px;font-weight:600;white-space:nowrap;background:var(--seat-wait);color:var(--seat-wait-ink);box-shadow:0 8px 22px rgba(0,0,0,.28)}
 .counter{display:flex;align-items:center;justify-content:center;gap:16px}
 .counter button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;cursor:pointer;color:var(--plum)}
 .counter button:hover{border-color:var(--rasp)}
@@ -1422,7 +1427,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     }).join("");
     return `
       <div class="panel-head"><h2>Tafelschikking</h2><span class="meta">${seatsTotal} plaatsen · ${seated.length} bezet (${seated.filter(g => g.definitief).length} definitief) · ${coming.length} gasten zonder afzeggingen</span></div>
-      <div class="legend"><span><i style="background:var(--seat-ok)"></i>Definitief</span><span><i style="background:var(--seat-wait)"></i>Kan nog verplaatsen</span><span><i style="background:var(--seat-free);border:1px solid var(--seat-free-line)"></i>Vrije plaats</span><span>Tik op een plaats om iemand te zetten, te verplaatsen of definitief te maken.</span></div>
+      <div class="legend"><span><i style="background:var(--seat-ok)"></i>Definitief</span><span><i style="background:var(--seat-wait)"></i>Kan nog verplaatsen</span><span><i style="background:var(--seat-free);border:1px solid var(--seat-free-line)"></i>Vrije plaats</span><span>Sleep een gast naar een andere plaats om te wisselen (op gsm: even vasthouden), of tik op de gast en daarna op de andere plaats.</span></div>
       ${coming.length ? `<div class="unplaced"><h3>Nog geen plaats · ${unplaced.length} gasten</h3>
         ${unplaced.length ? `<div class="pills">${unplaced.map(g => `<button class="pill" data-place-guest="${esc(g.id)}" aria-pressed="${T.placing === g.id}"${dis()}>${esc(gname(g))}</button>`).join("")}</div>` : `<span class="meta">Iedereen heeft een plaats.</span>`}</div>` : ""}
       ${tables.length ? `<div class="plan">${cards}</div>` : `<div class="empty">De tafels worden geladen…</div>`}`;
@@ -1448,9 +1453,108 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       }
       T.sel = { t, i }; refreshTables(); return;
     }
+    const cur = T.sel && map[T.sel.t + ":" + T.sel.i];
+    if(cur && !cur.definitief && !(T.sel.t === t && T.sel.i === i)){
+      if(seatMove(cur.id, key)){ T.sel = null; T.q = ""; refreshTables(); }
+      return;
+    }
     T.sel = (T.sel && T.sel.t === t && T.sel.i === i) ? null : { t, i }; T.q = "";
     refreshTables();
   }
+  // Gast naar een plaats zetten; staat daar al iemand, dan wisselen ze. Definitieve plaatsen blijven staan.
+  function seatMove(gid, toKey){
+    const { map } = seatMap();
+    const g = S.guests.find(x => x.id === gid); if(!g) return false;
+    const [t, iS] = toKey.split(":"), i = Number(iS), other = map[toKey];
+    if(other === g) return false;
+    if(g.definitief){ toast(`${firstName(g)} staat definitief. Maak eerst voorlopig om te verplaatsen.`); return false; }
+    if(other && other.definitief){ toast(`${firstName(other)} staat definitief. Maak eerst voorlopig om te wisselen.`); return false; }
+    const seated = map[g.tafel + ":" + g.plaats] === g;
+    if(!seated){
+      if(other){ toast("Deze plaats is al bezet. Kies een vrije (rode) plaats."); return false; }
+      write("guests", g.id, { tafel: t, plaats: i, definitief: false });
+      if(T.placing === g.id) T.placing = null;
+      toast(`${firstName(g)} heeft een plaats`);
+      return true;
+    }
+    const from = { tafel: g.tafel, plaats: g.plaats };
+    write("guests", g.id, { tafel: t, plaats: i });
+    if(other) write("guests", other.id, { tafel: from.tafel, plaats: from.plaats });
+    toast(other ? `${firstName(g)} en ${firstName(other)} zijn van plaats gewisseld` : `${firstName(g)} is verplaatst`);
+    return true;
+  }
+
+  // Slepen: muis meteen, gsm na even vasthouden (anders blijft scrollen gewoon werken).
+  let SD = null, SDdone = false; // SDdone: de klik die na het loslaten volgt negeren
+  function seatDragStart(){
+    const d = SD; if(!d) return;
+    const g = S.guests.find(x => x.id === d.id);
+    if(!g || g.definitief){ if(g) toast(`${firstName(g)} staat definitief. Maak eerst voorlopig om te verplaatsen.`); SD = null; return; }
+    d.active = true;
+    if(T.sel || T.placing || T.moving){ clearTableState(); renderSheet(); main.querySelectorAll(".seat.sel").forEach(x => x.classList.remove("sel")); }
+    d.ghost = document.createElement("div"); d.ghost.className = "seat-ghost"; d.ghost.textContent = firstName(g);
+    document.body.appendChild(d.ghost);
+    d.src.classList.add("lift"); document.body.classList.add("is-dragging");
+    if(d.touch && navigator.vibrate) try{ navigator.vibrate(12); }catch(_){}
+    seatDragMove();
+    const tick = () => {
+      if(SD !== d || !d.active) return;
+      const m = 70; let dy = 0;
+      if(d.y < m) dy = -Math.ceil((m - d.y) / 4); else if(d.y > window.innerHeight - m) dy = Math.ceil((d.y - window.innerHeight + m) / 4);
+      if(dy){ window.scrollBy(0, dy); seatDragMove(); }
+      d.raf = requestAnimationFrame(tick);
+    };
+    d.raf = requestAnimationFrame(tick);
+  }
+  function seatDragMove(){
+    const d = SD; if(!d || !d.active) return;
+    const w = d.ghost.offsetWidth, h = d.ghost.offsetHeight;
+    d.ghost.style.transform = `translate(${d.x - w / 2}px, ${d.y - h / 2 - (d.touch ? 34 : 0)}px)`;
+    const el = document.elementFromPoint(d.x, d.y), over = el && el.closest(".seat[data-spot]");
+    if(over === d.over) return;
+    if(d.over) d.over.classList.remove("drop", "nodrop");
+    d.over = over && over !== d.src ? over : null;
+    if(d.over){
+      const o = seatMap().map[d.over.dataset.spot];
+      d.over.classList.add(o && (o.definitief || !d.from) ? "nodrop" : "drop");
+    }
+  }
+  function seatDragEnd(e){
+    const d = SD; if(!d || (e && e.pointerId !== d.pid)) return;
+    SD = null; clearTimeout(d.timer);
+    if(!d.active) return;
+    cancelAnimationFrame(d.raf); d.ghost.remove(); d.src.classList.remove("lift"); document.body.classList.remove("is-dragging");
+    if(d.over) d.over.classList.remove("drop", "nodrop");
+    SDdone = true;
+    if(e && e.type === "pointerup" && d.over) seatMove(d.id, d.over.dataset.spot);
+    if(pending) renderAll(); else refreshTables();
+  }
+  main.addEventListener("pointerdown", e => {
+    SDdone = false;
+    if(!S.canWrite || e.button > 0 || currentTab() !== "tafels") return;
+    const el = e.target.closest(".seat[data-spot], [data-place-guest]"); if(!el || el.disabled) return;
+    let id, from = null;
+    if(el.dataset.spot){ const g = seatMap().map[el.dataset.spot]; if(!g) return; id = g.id; from = el.dataset.spot; }
+    else id = el.dataset.placeGuest;
+    if(SD) seatDragEnd();
+    SD = { id, from, src: el, pid: e.pointerId, touch: e.pointerType !== "mouse", x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, active: false, over: null };
+    if(SD.touch) SD.timer = setTimeout(seatDragStart, 300); else e.preventDefault();
+  });
+  document.addEventListener("pointermove", e => {
+    const d = SD; if(!d || e.pointerId !== d.pid) return;
+    d.x = e.clientX; d.y = e.clientY;
+    if(!d.active){
+      const far = Math.hypot(d.x - d.x0, d.y - d.y0);
+      if(d.touch){ if(far > 10) seatDragEnd(); return; }
+      if(far < 5) return;
+      seatDragStart(); if(SD !== d) return;
+    }
+    e.preventDefault(); seatDragMove();
+  });
+  document.addEventListener("pointerup", seatDragEnd);
+  document.addEventListener("pointercancel", seatDragEnd);
+  document.addEventListener("touchmove", e => { if(SD && SD.active) e.preventDefault(); }, { passive: false });
+  main.addEventListener("contextmenu", e => { if(currentTab() === "tafels" && e.target.closest(".seat, [data-place-guest]")) e.preventDefault(); });
   function renderSheet(listOnly){
     if(currentTab() === "uitnodigingen" && S.dbOk && A.h){ if(!sheet.querySelector("#addr-form")) renderAddrSheet(); return; }
     if(currentTab() === "uitnodigingen" && S.dbOk && J.h){ renderJoinSheet(listOnly); return; }
@@ -1472,7 +1576,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(g){
       sheet.innerHTML = `<div class="sheet-h"><h3>${title}</h3><button class="del" data-sheet-close>Sluiten</button></div>
         <p><b>${esc(gname(g))}</b> <span class="tag ${g.definitief ? "ok" : "soon"}">${g.definitief ? "Definitief" : "Kan nog verplaatsen"}</span></p>
-        <div class="acts"><button class="btn" data-sheet-def${dis()}>${g.definitief ? "Maak voorlopig" : "Maak definitief"}</button><button class="btn ghost" data-sheet-move${dis()}>Verplaatsen</button><button class="btn ghost" data-sheet-unseat${dis()}>Van tafel halen</button></div>`;
+        ${S.canWrite ? `<p class="meta" style="margin:0">${g.definitief ? "Definitief: maak eerst voorlopig om te verplaatsen." : "Tik op een andere plaats om te wisselen (of naar een vrije plaats te gaan)."}</p>` : ""}
+        <div class="acts"><button class="btn" data-sheet-def${dis()}>${g.definitief ? "Maak voorlopig" : "Maak definitief"}</button><button class="btn ghost" data-sheet-unseat${dis()}>Van tafel halen</button></div>`;
       return;
     }
     const q = T.q.trim().toLowerCase();
@@ -2050,6 +2155,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     if(e.target.closest("[data-ov-edit]")){ OV.edit = true; renderTab(); return; }
     if(e.target.closest("[data-ov-done]")){ OV.edit = false; renderTab(); return; }
     const spot = e.target.closest("[data-spot]");
+    if((spot || e.target.closest("[data-place-guest]")) && SDdone){ SDdone = false; return; }
     if(spot){ onSpot(spot.dataset.spot); return; }
     const pg = e.target.closest("[data-place-guest]");
     if(pg){ T.placing = T.placing === pg.dataset.placeGuest ? null : pg.dataset.placeGuest; T.sel = null; T.moving = null; refreshTables(); return; }
