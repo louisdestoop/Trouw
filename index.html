@@ -476,8 +476,14 @@ body.sheet-open{padding-bottom:62vh}
 .invs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;align-items:start}
 .inv{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .inv-top{display:flex;gap:12px;align-items:flex-start}
-.inv-qr{width:84px;flex:0 0 84px;border-radius:6px;overflow:hidden;border:1px solid var(--line);background:#fff}
-.inv-qr svg{display:block;width:100%;height:auto}
+.inv-code{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.inv-code small{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.inv-code b{font-size:17px;letter-spacing:.06em;color:var(--plum);font-variant-numeric:tabular-nums;white-space:nowrap}
+.qr-all{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.qr-all .qr{width:112px;flex:0 0 112px;border-radius:6px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.qr-all .qr svg{display:block;width:100%;height:auto}
+.qr-all .txt{flex:1 1 240px;display:flex;flex-direction:column;gap:6px;min-width:0;font-size:14px}
+.qr-all code{font-size:12px;color:var(--muted);word-break:break-all}
 .inv-main{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
 .inv-name{font-family:var(--display);font-size:19px;color:var(--plum);padding-left:0}
 .inv-link code{font-size:11.5px;color:var(--muted);word-break:break-all}
@@ -604,10 +610,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="sheet" class="sheet" role="dialog" aria-label="Plaats aan tafel" hidden></div>
 
-<script src="config.js?v=20261027c"></script>
-<script src="api.js?v=20261027c"></script>
+<script src="config.js?v=20261028a"></script>
+<script src="api.js?v=20261028a"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="vendor/jszip.min.js" defer></script>
 <script>
 (function(){
   const WEDDING = new Date(2027, 6, 10);
@@ -637,7 +642,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   // Volgorde van de gastenlijst: kolom "volgorde" (versleepbaar, mag een kommagetal zijn), anders het gastnummer.
   const guestRank = g => { const v = Number(g.volgorde); return g.volgorde !== "" && g.volgorde != null && isFinite(v) ? v : (Number(g.nr) || 9999); };
   const guestsSorted = () => [...S.guests].sort((a,b) => guestRank(a) - guestRank(b) || (a.created||0) - (b.created||0));
-  // Vergrendeling: zodra de uitnodigingen verstuurd zijn, mogen de QR-codes (gezinnen en hun code) nooit meer veranderen.
+  // Vergrendeling: zodra de uitnodigingen verstuurd zijn, mogen de gezinnen en hun code (6 cijfers) nooit meer veranderen.
   const invitesLocked = () => !!String(S.settings.uitnodigingen_verstuurd || "").trim();
   const dis = () => S.canWrite ? "" : " disabled";
   const currentTab = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : "overzicht"; };
@@ -1534,7 +1539,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const addrLine = h => [String(h.adres_straat || "").trim(), [h.adres_postcode, h.adres_gemeente].map(x => String(x || "").trim()).filter(Boolean).join(" "), String(h.adres_land || "").trim()].filter(Boolean).join(", ");
   const parseAddr = str => { const m = /^\s*(.+?),\s*(\d{4,5})\s+(.+?)\s*$/.exec(String(str || "")); return m ? { straat: m[1], postcode: m[2], gemeente: m[3] } : null; };
   const J = { h:null, q:"" };
-  const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const SETTING_FIELDS = [
     ["site_url", "Webadres van de app", "url", "bv. https://www.florenceenlouis.be"],
     ["rsvp_deadline", "Antwoorden vóór", "date", ""],
@@ -1545,20 +1549,38 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     ["rsvp_extra", "Extra info voor gasten", "textarea", "bv. overnachting, cadeautip"],
     ["meldingen_email", "Stuur mij een mail bij elk antwoord", "email", "jouw e-mailadres"],
   ];
+  // Code per gezin: 6 cijfers, niet beginnend met 0 (anders kan Google Sheets de 0 laten vallen).
+  // Een tikfout (één cijfer fout of twee buren omgewisseld) mag nooit de code van een ander gezin opleveren,
+  // en voor de hand liggende codes (123456, 111222, ...) worden overgeslagen.
+  function codeOk(c, used){
+    if(!/^[1-9]\d{5}$/.test(c) || new Set(c).size < 3) return false;
+    const d = [...c].map(Number), steps = new Set(d.slice(1).map((x, i) => x - d[i]));
+    if(steps.size === 1) return false;
+    return !used.some(u => {
+      if(u.length !== 6) return false;
+      let diff = [];
+      for(let i = 0; i < 6; i++) if(u[i] !== c[i]) diff.push(i);
+      return diff.length < 2 || (diff.length === 2 && diff[1] === diff[0] + 1 && u[diff[0]] === c[diff[1]] && u[diff[1]] === c[diff[0]]);
+    });
+  }
   function newCode(){
-    const used = new Set(S.households.map(h => String(h.code)));
+    const used = S.households.map(h => String(h.code || "").trim());
     let c;
     do {
-      const a = new Uint8Array(8); crypto.getRandomValues(a);
-      c = Array.from(a, b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
-    } while(used.has(c));
+      const a = new Uint32Array(1); crypto.getRandomValues(a);
+      c = String(100000 + a[0] % 900000);
+    } while(!codeOk(c, used));
     return c;
   }
+  const fmtCode = c => /^\d{6}$/.test(String(c)) ? String(c).slice(0, 3) + " " + String(c).slice(3) : String(c || "");
   function siteBase(){
     const s = String(S.settings.site_url || "").trim().replace(/\/+$/, "");
     return s || (location.origin + location.pathname.replace(/\/[^/]*$/, ""));
   }
-  const rsvpLink = h => `${siteBase()}/r/?c=${encodeURIComponent(h.code)}`;
+  // Eén QR-code voor iedereen: die opent de antwoordpagina, waar elk gezin zijn code van 6 cijfers invult.
+  const rsvpBase = () => `${siteBase()}/r/`;
+  // Rechtstreekse link met code: enkel voor 'Bekijk als gast' in de planner.
+  const rsvpLink = h => `${rsvpBase()}?c=${encodeURIComponent(h.code)}`;
   function qrSvg(text, margin){
     if(!window.qrcode) return "";
     const q = qrcode(0, "M"); q.addData(text); q.make();
@@ -1633,18 +1655,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       const ms = members(h.id), link = rsvpLink(h);
       return `<article class="inv">
         <div class="inv-top">
-          <div class="inv-qr" aria-hidden="true">${qrSvg(link)}</div>
           <div class="inv-main">
             <input class="cell inv-name" ${attrs("households", h.id, "naam", 'aria-label="Naam op de uitnodiging"')} value="${esc(h.naam)}">
             <div>${h.rsvp_op ? `<span class="tag ok">Geantwoord op ${esc(fmtStamp(h.rsvp_op))}</span>` : `<span class="tag quiet">Nog geen antwoord</span>`}</div>
-            <div class="inv-link"><code>${esc(link)}</code></div>
             <div class="inv-acts">
-              <button class="chip-btn" data-copy="${esc(link)}">Link kopiëren</button>
-              <button class="chip-btn" data-qr-dl="${esc(h.id)}">QR downloaden</button>
+              <button class="chip-btn" data-copy="${esc(String(h.code || ""))}" data-copy-what="Code">Code kopiëren</button>
               <a class="chip-btn" href="${esc(link)}" target="_blank" rel="noopener">Bekijk als gast</a>
               <button class="chip-btn addr-btn${hasAddr(h) ? " ok" : ""}" data-addr="${esc(h.id)}"${dis()}>${hasAddr(h) ? "✓ Adres" : "Adres toevoegen"}</button>
             </div>
           </div>
+          <div class="inv-code" title="Code van dit gezin"><small>Code</small><b>${esc(fmtCode(h.code))}</b></div>
         </div>
         ${hasAddr(h) ? `<p class="inv-addr">${esc(addrLine(h))}</p>` : ""}
         ${h.rsvp_bericht ? `<blockquote class="inv-msg">${esc(h.rsvp_bericht)}</blockquote>` : ""}
@@ -1678,6 +1698,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <span><b>${yes.filter(g => (g.dieet || "").trim()).length}</b> met allergie of dieet</span>
         <span><b>${hs.filter(hasAddr).length}</b> van ${hs.length} adressen</span>
       </div>
+      <div class="qr-all">
+        <div class="qr" aria-hidden="true">${qrSvg(rsvpBase())}</div>
+        <div class="txt">
+          <b>Eén QR-code voor alle uitnodigingen</b>
+          <span class="meta">Gasten scannen deze code en vullen daarna de code van 6 cijfers van hun gezin in (staat bij elk gezin hieronder).${S.settings.site_url ? "" : " Vul eerst het webadres van de app in: de QR-code verandert mee."}</span>
+          <code>${esc(rsvpBase())}</code>
+          <div class="inv-acts"><button class="chip-btn" data-qr-dl>QR downloaden (SVG)</button><button class="chip-btn" data-copy="${esc(rsvpBase())}">Link kopiëren</button></div>
+        </div>
+      </div>
       <details class="inv-settings"${S.settings.site_url ? "" : " open"}>
         <summary>Wat gasten zien op de antwoordpagina</summary>
         <div class="grid">${SETTING_FIELDS.map(field).join("")}</div>
@@ -1688,7 +1717,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <span class="sep" aria-hidden="true"></span>
         <div class="chips"><button class="chip-btn" data-iaddr="ja" aria-pressed="${FI.addr === "ja"}">Adres toegevoegd ${hs.filter(hasAddr).length}</button><button class="chip-btn" data-iaddr="nee" aria-pressed="${FI.addr === "nee"}">Adres nog toe te voegen ${hs.filter(h => !hasAddr(h)).length}</button></div>
         <span class="sep" aria-hidden="true"></span>
-        <div class="chips"><button class="chip-btn" data-qr-zip>Alle QR-codes (zip)</button><button class="chip-btn" data-links-csv>Lijst met links (CSV)</button></div>
+        <div class="chips"><button class="chip-btn" data-links-csv>Lijst met codes (CSV)</button></div>
       </div>
       ${loose.length ? `<div class="unplaced"><h3>Nog geen gezin · ${loose.length} gasten</h3>
         <div class="pills">${loose.map(g => `<button class="pill" data-newh="${esc(g.id)}" title="Maak een nieuw gezin met ${esc(gname(g))}"${dis()}>${esc(gname(g))} +</button>`).join("")}</div>
@@ -1698,10 +1727,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
   let lockConfirm = false;
   function lockBar(){
-    if(invitesLocked()) return `<div class="lockbar on" role="status"><span class="lock-ic" aria-hidden="true">✓</span><div><b>Uitnodigingen verstuurd op ${esc(fmtStamp(S.settings.uitnodigingen_verstuurd))}.</b> De QR-codes liggen vast: gezinnen kunnen niet meer verwijderd worden. Namen en leden aanpassen kan wel. Een nieuw gezin krijgt een eigen, nieuwe QR-code.</div></div>`;
-    if(lockConfirm) return `<div class="lockbar ask" role="group" aria-label="Bevestigen"><div><b>Zijn alle uitnodigingen verstuurd?</b> Daarna kunnen gezinnen en hun QR-codes nooit meer verwijderd of vervangen worden. Dit kan je in de app niet ongedaan maken.</div>
+    if(invitesLocked()) return `<div class="lockbar on" role="status"><span class="lock-ic" aria-hidden="true">✓</span><div><b>Uitnodigingen verstuurd op ${esc(fmtStamp(S.settings.uitnodigingen_verstuurd))}.</b> De codes liggen vast: gezinnen kunnen niet meer verwijderd worden. Namen en leden aanpassen kan wel. Een nieuw gezin krijgt een eigen, nieuwe code.</div></div>`;
+    if(lockConfirm) return `<div class="lockbar ask" role="group" aria-label="Bevestigen"><div><b>Zijn alle uitnodigingen verstuurd?</b> Daarna kunnen gezinnen en hun codes nooit meer verwijderd of vervangen worden. Dit kan je in de app niet ongedaan maken.</div>
       <div class="acts"><button class="btn" data-lock-yes${dis()}>Ja, ze zijn verstuurd</button><button class="chip-btn" data-lock-no>Annuleer</button></div></div>`;
-    return `<div class="lockbar"><label><input type="checkbox" data-lock-ask${dis()}> <b>Uitnodigingen verstuurd</b></label><span class="meta">Vink dit aan zodra de uitnodigingen met de QR-codes de deur uit zijn. Vanaf dan liggen de codes vast.</span></div>`;
+    return `<div class="lockbar"><label><input type="checkbox" data-lock-ask${dis()}> <b>Uitnodigingen verstuurd</b></label><span class="meta">Vink dit aan zodra de uitnodigingen met de codes de deur uit zijn. Vanaf dan liggen de codes vast.</span></div>`;
   }
   function renderAddrSheet(){
     const h = S.households.find(x => x.id === A.h);
@@ -1747,20 +1776,20 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
-  const safeName = s => String(s || "gezin").replace(/[\\/:*?"<>|]+/g, "").trim().slice(0, 80) || "gezin";
-  const qrFile = h => `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSvg(rsvpLink(h), 4).replace("<svg ", '<svg width="1000" height="1000" ');
+  const qrFile = () => `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSvg(rsvpBase(), 4).replace("<svg ", '<svg width="1000" height="1000" ');
   function linksCsv(){
-    const rows = [["Gezin", "Link", "Code", "Aantal personen", "Gasten", "Straat", "Postcode", "Gemeente", "Land"]];
+    const rows = [["Gezin", "Code", "Aantal personen", "Gasten", "Straat", "Postcode", "Gemeente", "Land", "Antwoordpagina"]];
     [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).forEach(h => {
       const ms = S.guests.filter(g => g.gezin === h.id).sort(memberOrder);
-      rows.push([h.naam, rsvpLink(h), h.code, ms.length, ms.map(gname).join(", "), h.adres_straat || "", h.adres_postcode || "", h.adres_gemeente || "", h.adres_land || ""]);
+      rows.push([h.naam, fmtCode(h.code), ms.length, ms.map(gname).join(", "), h.adres_straat || "", h.adres_postcode || "", h.adres_gemeente || "", h.adres_land || "", rsvpBase()]);
     });
     return "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
   }
-  function copyText(t){
-    const done = () => toast("Link gekopieerd");
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => window.prompt("Kopieer de link:", t));
-    else window.prompt("Kopieer de link:", t);
+  function copyText(t, what){
+    what = what || "Link";
+    const done = () => toast(what + " gekopieerd");
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => window.prompt("Kopieer:", t));
+    else window.prompt("Kopieer:", t);
   }
 
   function invitesClick(e){
@@ -1771,23 +1800,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       lockConfirm = false;
       const d = new Date(), p = n => String(n).padStart(2, "0");
       saveSettings({ uitnodigingen_verstuurd: `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}` });
-      toast("Vergrendeld: de QR-codes liggen vast"); renderTab(); return true;
+      toast("Vergrendeld: de codes liggen vast"); renderTab(); return true;
     }
     const f = t.closest("[data-ifilter]"); if(f){ FI.filter = f.dataset.ifilter; renderTab(); return true; }
     const fa = t.closest("[data-iaddr]"); if(fa){ FI.addr = FI.addr === fa.dataset.iaddr ? "" : fa.dataset.iaddr; renderTab(); return true; }
     const ab = t.closest("[data-addr]"); if(ab){ J.h = null; A.h = ab.dataset.addr; renderAddrSheet(); const i = document.getElementById("addr-straat"); if(i) i.focus(); return true; }
-    const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy); return true; }
-    const dl = t.closest("[data-qr-dl]");
-    if(dl){ const h = S.households.find(x => x.id === dl.dataset.qrDl); if(h) download(`QR ${safeName(h.naam)}.svg`, new Blob([qrFile(h)], { type: "image/svg+xml" })); return true; }
-    if(t.closest("[data-links-csv]")){ download("Uitnodigingen - links.csv", new Blob([linksCsv()], { type: "text/csv;charset=utf-8" })); return true; }
-    if(t.closest("[data-qr-zip]")){
-      if(!window.JSZip){ toast("Even geduld, het zip-onderdeel wordt nog geladen."); return true; }
-      const zip = new JSZip(), names = new Set();
-      S.households.forEach(h => { let n = `QR ${safeName(h.naam)}`, k = 2; while(names.has(n)) n = `QR ${safeName(h.naam)} (${k++})`; names.add(n); zip.file(n + ".svg", qrFile(h)); });
-      zip.file("Uitnodigingen - links.csv", linksCsv());
-      zip.generateAsync({ type: "blob" }).then(b => download("QR-codes uitnodigingen.zip", b));
-      return true;
-    }
+    const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy, cp.dataset.copyWhat); return true; }
+    if(t.closest("[data-qr-dl]")){ download("QR-code uitnodiging.svg", new Blob([qrFile()], { type: "image/svg+xml" })); return true; }
+    if(t.closest("[data-links-csv]")){ download("Uitnodigingen - codes.csv", new Blob([linksCsv()], { type: "text/csv;charset=utf-8" })); return true; }
     const sp = t.closest("[data-split]");
     if(sp){
       const g = S.guests.find(x => x.id === sp.dataset.split), old = g && g.gezin;

@@ -68,8 +68,10 @@ textarea{resize:vertical;min-height:90px}
 .summary li{padding:8px 0;border-top:1px dotted var(--line)}
 .linkish{border:none;background:none;color:var(--rasp);text-decoration:underline;cursor:pointer;padding:6px;font-weight:600}
 .codeform{display:flex;gap:8px}
-.codeform input{text-transform:uppercase;letter-spacing:.15em;text-align:center}
+.codeform input{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:24px;font-variant-numeric:tabular-nums;padding:10px 8px}
 .codeform button{border:none;border-radius:10px;background:var(--plum);color:var(--on-accent);font-weight:600;padding:0 18px;cursor:pointer}
+.codeform button:disabled{opacity:.6;cursor:default}
+.code-title{margin:0;font-family:var(--display);font-size:24px;color:var(--plum)}
 footer{text-align:center;font-size:13px;color:var(--muted)}
 @media (max-width:380px){ .row3{grid-template-columns:1fr} .names{grid-template-columns:1fr} }
 /* Bodoni Moda past zijn haarlijnen aan de lettergrootte aan; bij grote titels worden die bijna onzichtbaar.
@@ -89,8 +91,9 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
   <div id="loading" class="card center small">Even geduld, we zoeken je uitnodiging…</div>
 
   <form id="codeform" class="card intro" hidden>
-    <p>Scan de QR-code op je uitnodiging, of vul hieronder de code in die erbij staat.</p>
-    <div class="codeform"><input id="code-in" type="text" inputmode="text" autocomplete="off" maxlength="12" aria-label="Code van je uitnodiging" required><button type="submit">Verder</button></div>
+    <p class="code-title">Welkom!</p>
+    <p>Vul de code van 6 cijfers in die op je uitnodiging staat.</p>
+    <div class="codeform"><input id="code-in" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="______" aria-label="Code van 6 cijfers" required><button type="submit" id="code-btn">Verder</button></div>
     <p id="code-err" class="err" role="alert"></p>
   </form>
 
@@ -101,7 +104,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
   <footer>Vragen? Neem gerust contact op met Florence of Louis.</footer>
 </div>
 
-<script src="../config.js?v=20261027c"></script>
+<script src="../config.js?v=20261028a"></script>
 <script>
 (function(){
   "use strict";
@@ -121,9 +124,16 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
   const fullName = m => [m.voornaam, m.achternaam].filter(Boolean).join(" ");
   const plusOwner = m => String(m.voornaam || "").replace(/^\+1 van\s*/i, "");
 
+  const cleanCode = s => String(s || "").replace(/[\s.\-]/g, "").toUpperCase();
+  // Een code in de link (?c=) gebruikt enkel de planner ('Bekijk als gast'); gasten vullen hun code zelf in.
   function getCode(){
     const p = new URLSearchParams(location.search);
-    return (p.get("c") || location.hash.replace(/^#/, "") || "").trim().toUpperCase();
+    return cleanCode(p.get("c") || location.hash.replace(/^#/, ""));
+  }
+  function askCode(msg){
+    show("codeform"); $("code-err").textContent = msg || "";
+    const b = $("code-btn"); b.disabled = false; b.textContent = "Verder";
+    const i = $("code-in"); i.value = ""; setTimeout(() => i.focus(), 50);
   }
 
   async function open(c){
@@ -131,8 +141,8 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
     if(!/^https:\/\/script\.google\.com\//.test(api())){ $("loading").textContent = "Deze pagina is nog niet helemaal klaar. Probeer het later opnieuw."; return; }
     let res;
     try{ res = await post({ action: "rsvpGet", code: c }); }
-    catch(_){ $("loading").textContent = "We konden je uitnodiging niet laden. Controleer je internetverbinding en probeer opnieuw."; return; }
-    if(!res.ok){ show("codeform"); $("code-err").textContent = c ? "We vonden geen uitnodiging met deze code. Kijk ze even na." : ""; return; }
+    catch(_){ askCode("We konden je uitnodiging niet laden. Controleer je internetverbinding en probeer opnieuw."); return; }
+    if(!res.ok){ askCode(res.error === "busy" ? "Er werden te veel foute codes ingegeven. Probeer het binnen 10 minuten opnieuw." : "Deze code kennen we niet. Kijk ze even na op je uitnodiging."); return; }
     data = res;
     answers = res.members.map(m => {
       const st = m.status === "ja" || m.status === "nee" ? m.status : "";
@@ -188,6 +198,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
     const h = data.household;
     $("form").innerHTML = `<div style="display:flex;flex-direction:column;gap:14px">
       <h2>${esc(h.naam.replace(/\s*\(\+1\)$/, ""))}</h2>
+      <p class="center small">Niet jullie uitnodiging? <button type="button" class="linkish" data-other-code>Andere code ingeven</button></p>
       ${h.beantwoord && !data.locked ? `<p class="center small">Je antwoordde al. Je kan je antwoord hieronder nog aanpassen.</p>` : ""}
       ${answers.map(memberHtml).join("")}
       <section class="card"><label class="field">Een berichtje voor Florence & Louis (optioneel)<textarea id="msg" maxlength="1000"${data.locked ? " disabled" : ""}>${esc(h.bericht)}</textarea></label></section>
@@ -210,6 +221,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
   }
 
   $("form").addEventListener("click", e => {
+    if(e.target.closest("[data-other-code]")){ data = null; code = ""; history.replaceState(null, "", location.pathname); askCode(""); window.scrollTo(0, 0); return; }
     const b = e.target.closest("button[data-i]"); if(!b || data.locked) return;
     const m = answers[+b.dataset.i];
     if(b.dataset.toggle){ m[b.dataset.toggle] = !m[b.dataset.toggle]; if(b.dataset.toggle === "diner" && !m.diner) m.hoofdgerecht = ""; }
@@ -251,21 +263,28 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
       <h2>${coming.length ? "Dank je wel!" : "Jammer, maar bedankt om het te laten weten"}</h2>
       <p>${coming.length ? "We kijken ernaar uit om samen te feesten." : "We denken aan jullie op 10 juli."}</p>
       <ul class="summary">${answers.map(line).join("")}</ul>
-      <p class="small">Toch iets wijzigen? Dat kan via dezelfde QR-code${data.settings.rsvp_deadline ? ` tot ${esc(fmtDate(data.settings.rsvp_deadline))}` : ""}.</p>
+      <p class="small">Toch iets wijzigen? Scan opnieuw de QR-code en vul dezelfde code in${data.settings.rsvp_deadline ? ` tot ${esc(fmtDate(data.settings.rsvp_deadline))}` : ""}.</p>
       <button type="button" class="linkish" id="again">Antwoord aanpassen</button>`;
     show("thanks"); window.scrollTo(0, 0);
     $("again").addEventListener("click", () => { data.household.beantwoord = true; data.household.bericht = ($("msg") && $("msg").value) || data.household.bericht; renderForm(); show(["intro", "form"]); });
   }
 
-  $("codeform").addEventListener("submit", e => {
-    e.preventDefault();
-    const c = $("code-in").value.trim().toUpperCase(); if(!c) return;
-    history.replaceState(null, "", "?c=" + encodeURIComponent(c));
+  // De code komt bewust niet in de adresbalk: wie de link doorstuurt, stuurt zo geen toegang mee.
+  function submitCode(){
+    const c = cleanCode($("code-in").value);
+    if(!c || $("code-btn").disabled) return;
+    if(/^\d+$/.test(c) && c.length !== 6){ $("code-err").textContent = "De code bestaat uit 6 cijfers."; return; }
+    const b = $("code-btn"); b.disabled = true; b.textContent = "…";
     open(c);
+  }
+  $("codeform").addEventListener("submit", e => { e.preventDefault(); submitCode(); });
+  $("code-in").addEventListener("input", e => {
+    $("code-err").textContent = "";
+    if(/^\d{6}$/.test(cleanCode(e.target.value))) submitCode(); // meteen verder na het 6de cijfer
   });
 
   const c0 = getCode();
-  if(c0) open(c0); else { show("codeform"); }
+  if(c0) open(c0); else askCode("");
 })();
 </script>
 </body>
