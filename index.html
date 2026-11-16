@@ -157,6 +157,7 @@ body.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 .del{border:none;background:transparent;color:var(--muted);cursor:pointer;padding:5px 8px;border-radius:6px;font-size:13px;white-space:nowrap}
 .del:hover{color:var(--warn);background:var(--warn-soft)}
 .del.armed{color:var(--on-accent);background:var(--warn)}
+.chip-btn.armed{color:var(--on-accent);background:var(--warn);border-color:var(--warn)}
 
 /* Overzicht (leesweergave) */
 .ov-days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
@@ -862,11 +863,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <option value="open"${st==="open"?" selected":""}>Geen antwoord</option><option value="ja"${st==="ja"?" selected":""}>Komt</option><option value="nee"${st==="nee"?" selected":""}>Komt niet</option></select></td>
         <td><div class="crd">${yn(g,"ceremonie","Ceremonie")}${yn(g,"receptie","Receptie")}${yn(g,"diner","Diner")}</div></td>
         <td><select class="cell" ${attrs("guests", g.id, "hoofdgerecht", 'aria-label="Hoofdgerecht"')}><option value="">—</option>${["vlees","vis","vegetarisch"].map(h => `<option value="${h}"${g.hoofdgerecht===h?" selected":""}>${h[0].toUpperCase()+h.slice(1)}</option>`).join("")}</select></td>
-        <td><input class="cell" ${attrs("guests", g.id, "dieet", 'aria-label="Dieet of allergie"')} value="${esc(g.dieet)}" placeholder="—"></td>
+        <td><input class="cell" ${attrs("guests", g.id, "dieet", 'aria-label="Allergieën"')} value="${esc(g.dieet)}" placeholder="—"></td>
         <td class="num">${delBtn("guests", g.id)}</td></tr>`;
     }).join("");
     return `<div class="scroll guests"><table>
-      <thead><tr><th>#</th><th>Voornaam</th><th>Achternaam</th><th>Via</th><th>Relatie</th><th class="c" title="Kind: komt niet naar het diner">Kind</th><th class="c">Burg.</th><th>Status</th><th class="c">Aanwezig</th><th>Hoofdgerecht</th><th>Dieet / allergie</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>Voornaam</th><th>Achternaam</th><th>Via</th><th>Relatie</th><th class="c" title="Kind: komt niet naar het diner">Kind</th><th class="c">Burg.</th><th>Status</th><th class="c">Aanwezig</th><th>Hoofdgerecht</th><th>Allergieën</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>
       <p class="meta">${list.length} van ${S.guests.length} gasten getoond.</p>`;
   }
@@ -878,7 +879,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const chip = (grp, k, l, n) => `<button class="chip-btn" data-fgrp="${grp}" data-fval="${k}" aria-pressed="${F[grp]===k}">${l} ${n}</button>`;
     return `
       <div class="panel-head"><h2>Gasten</h2>
-        <span class="meta">Burgerlijke trouw: ${alive.filter(x=>x.burgerlijk).length} · hoofdgerecht vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")} · ${alive.filter(x=>(x.dieet||"").trim()).length} met dieetwens</span></div>
+        <span class="meta">Burgerlijke trouw: ${alive.filter(x=>x.burgerlijk).length} · hoofdgerecht vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")} · ${alive.filter(x=>(x.dieet||"").trim()).length} met allergie</span></div>
       <div class="toolbar">
         <input id="g-search" class="search" type="search" placeholder="Zoek op naam of relatie" value="${esc(F.q)}" aria-label="Zoek gast">
         <div class="chips">${chip("via","alle","Iedereen",g.length)}${chip("via","louis","Via Louis",via.louis)}${chip("via","florence","Via "+esc(partnerLabel()),via.florence)}</div>
@@ -1748,13 +1749,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     toast(msg);
   }
 
+  // Zoeken zonder hoofdletters of accenten ("Hélène" = "helene").
+  const norm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   function inviteCards(){
-    const q = FI.q.trim().toLowerCase();
+    const q = norm(FI.q.trim()), qd = FI.q.replace(/\s/g, "");
     const members = id => S.guests.filter(g => g.gezin === id).sort(memberOrder);
     const hs = [...S.households].sort((a,b) => (a.created||0) - (b.created||0)).filter(h =>
       (FI.filter === "alle" || (FI.filter === "ja" ? !!h.rsvp_op : !h.rsvp_op)) &&
       (!FI.addr || (FI.addr === "ja" ? hasAddr(h) : !hasAddr(h))) &&
-      (!q || String(h.naam).toLowerCase().includes(q) || members(h.id).some(g => gname(g).toLowerCase().includes(q))));
+      (!q || norm(h.naam).includes(q) || members(h.id).some(g => norm(gname(g)).includes(q)) || (/^\d{3,6}$/.test(qd) && String(h.code || "").includes(qd))));
     if(!hs.length) return `<div class="empty">${S.households.length ? "Geen gezinnen die aan deze filter voldoen." : "Nog geen gezinnen. Voeg hierboven het eerste toe."}</div>`;
     return `<div class="invs">${hs.map(h => {
       const ms = members(h.id), link = rsvpLink(h);
@@ -1767,6 +1770,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
               <button class="chip-btn" data-copy="${esc(String(h.code || ""))}" data-copy-what="Code">Code kopiëren</button>
               <a class="chip-btn" href="${esc(link)}" target="_blank" rel="noopener">Bekijk als gast</a>
               <button class="chip-btn addr-btn${hasAddr(h) ? " ok" : ""}" data-addr="${esc(h.id)}"${dis()}>${hasAddr(h) ? "✓ Adres" : "Adres toevoegen"}</button>
+              ${hasAnswer(h, ms) ? `<button class="chip-btn" data-reset="${esc(h.id)}" title="Wis de antwoorden van dit gezin: het lijkt dan alsof ze nog niet reageerden"${dis()}>Reset</button>` : ""}
             </div>
           </div>
           <div class="inv-code" title="Code van dit gezin"><small>Code</small><b>${esc(fmtCode(h.code))}</b></div>
@@ -1777,6 +1781,25 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="inv-foot"><button class="chip-btn" data-join-open="${esc(h.id)}"${dis()}>+ Gast toevoegen</button>${invitesLocked() ? "" : delBtn("households", h.id)}</div>
       </article>`;
     }).join("")}</div>`;
+  }
+
+  // Heeft dit gezin (of een lid) al iets geantwoord?
+  const hasAnswer = (h, ms) => !!h.rsvp_op || !!h.rsvp_bericht || ms.some(g => (g.status || "open") !== "open" || g.rsvp_op || (g.dieet || "").trim() || g.hoofdgerecht);
+  // Reset: antwoorden van het gezin wissen zonder het gezin of de code te verwijderen.
+  function resetHousehold(hid){
+    const h = S.households.find(x => x.id === hid); if(!h) return;
+    const ms = S.guests.filter(g => g.gezin === hid).sort(memberOrder);
+    ms.forEach((g, i) => {
+      const p = { status: "open", ceremonie: null, receptie: null, diner: null, hoofdgerecht: "", dieet: "", rsvp_op: "" };
+      // Een +1 die een naam invulde, wordt terug "+1 van …" (de gast die er in de volgorde vóór staat).
+      if(g.optioneel && !/^\+1 van/i.test(g.voornaam || "")){
+        const before = ms.slice(0, i).filter(x => !x.optioneel), owner = before[before.length - 1] || ms.find(x => !x.optioneel);
+        if(owner){ p.voornaam = "+1 van " + gname(owner); p.achternaam = ""; }
+      }
+      write("guests", g.id, p);
+    });
+    write("households", hid, { rsvp_op: "", rsvp_bericht: "" });
+    toast(`Antwoorden van ${h.naam} gewist`);
   }
 
   function viewInvites(){
@@ -1800,7 +1823,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="inv-stats">
         <span><b>${n("ja")}</b> komen</span><span><b>${n("nee")}</b> komen niet</span><span><b>${n("open")}</b> nog geen antwoord</span>
         <span>Diner: <b>${yes.filter(g => g.diner).length}</b> (vlees ${hg("vlees")} · vis ${hg("vis")} · vegetarisch ${hg("vegetarisch")})</span>
-        <span><b>${yes.filter(g => (g.dieet || "").trim()).length}</b> met allergie of dieet</span>
+        <span><b>${yes.filter(g => (g.dieet || "").trim()).length}</b> met allergie</span>
         <span><b>${hs.filter(hasAddr).length}</b> van ${hs.length} adressen</span>
       </div>
       <div class="qr-all">
@@ -1911,6 +1934,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     const fa = t.closest("[data-iaddr]"); if(fa){ FI.addr = FI.addr === fa.dataset.iaddr ? "" : fa.dataset.iaddr; renderTab(); return true; }
     const ab = t.closest("[data-addr]"); if(ab){ J.h = null; A.h = ab.dataset.addr; renderAddrSheet(); const i = document.getElementById("addr-straat"); if(i) i.focus(); return true; }
     const cp = t.closest("[data-copy]"); if(cp){ copyText(cp.dataset.copy, cp.dataset.copyWhat); return true; }
+    const rs = t.closest("[data-reset]");
+    if(rs){
+      if(!rs.classList.contains("armed")){
+        rs.classList.add("armed"); rs.textContent = "Zeker? Antwoorden wissen";
+        setTimeout(() => { if(rs.isConnected){ rs.classList.remove("armed"); rs.textContent = "Reset"; } }, 4000);
+        return true;
+      }
+      resetHousehold(rs.dataset.reset); return true;
+    }
     if(t.closest("[data-qr-dl]")){ download("QR-code uitnodiging.svg", new Blob([qrFile()], { type: "image/svg+xml" })); return true; }
     if(t.closest("[data-links-csv]")){ download("Uitnodigingen - codes.csv", new Blob([linksCsv()], { type: "text/csv;charset=utf-8" })); return true; }
     const sp = t.closest("[data-split]");
@@ -2103,7 +2135,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   window.addEventListener("hashchange", () => { confirmDone = null; CF = null; if(A.h){ A.h = null; sheet.innerHTML = ""; } renderAll(true); });
 
   main.addEventListener("input", e => {
-    if(isSearch(e.target)){ F.q = e.target.value; document.getElementById("guest-list").innerHTML = guestRows(); }
+    if(e.target.id === "g-search"){ F.q = e.target.value; const gl = document.getElementById("guest-list"); if(gl) gl.innerHTML = guestRows(); }
     if(e.target.id === "i-search"){ FI.q = e.target.value; const il = document.getElementById("inv-list"); if(il) il.innerHTML = inviteCards(); }
     if(e.target.matches("textarea.auto")){ e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }
     if(CF && e.target.id === "ovl-" + CF.id) CF.label = e.target.value;

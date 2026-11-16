@@ -184,7 +184,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
         <fieldset><legend>Aanwezig op</legend><div class="row3">${moments.map(([k, l]) => `<button type="button" class="opt" data-i="${i}" data-toggle="${k}" aria-pressed="${!!m[k]}"${dis}>${l}</button>`).join("")}</div></fieldset>
         ${m.kind ? `<p class="hint">Kinderen zijn welkom op de ceremonie en de receptie.</p>` : ""}
         ${m.diner && !m.kind ? `<fieldset><legend>Hoofdgerecht</legend><div class="row3">${DISHES.map(([v, l]) => btn("hoofdgerecht", v, l)).join("")}</div></fieldset>` : ""}
-        <label class="field">Allergieën of dieetwensen<input type="text" data-i="${i}" data-f="dieet" value="${esc(m.dieet)}" placeholder="Niets? Laat leeg." autocomplete="off"${dis}></label>`;
+        <label class="field">Eventuele allergieën<input type="text" data-i="${i}" data-f="dieet" value="${esc(m.dieet)}" placeholder="Enkel wat je niet mag eten. Niets? Laat leeg." autocomplete="off"${dis}></label>`;
     }
     return `<section class="card guest">
       <h3>${title}</h3>
