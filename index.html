@@ -708,7 +708,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       setBar("s-budget-bar", 0);
     } else {
       document.getElementById("s-budget").innerHTML = `${eur(fixed)} <small>van ${eur(est)}</small>`;
-      document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, inclusief 10% reserve";
+      document.getElementById("s-budget-foot").textContent = real ? `Werkelijke kosten ingevuld: ${eur(real)}` : "Totaal geraamd, incl. btw";
       setBar("s-budget-bar", est ? fixed/est*100 : 0);
     }
 
