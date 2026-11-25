@@ -108,7 +108,7 @@ main{display:flex;flex-direction:column;gap:16px;min-height:200px}
 
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 table{border-collapse:collapse;width:100%}
-.guests table{min-width:990px}.budget table{min-width:950px}
+.guests table{min-width:990px}.budget table{min-width:1070px}
 th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 6px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
 td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:last-child td{border-bottom:none}
@@ -945,6 +945,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="empty hidden-budget"><p>Het budget is verborgen op dit toestel.</p><button class="btn" data-show-budget>Toon budget</button></div>`;
     const list = [...S.budget].sort((a,b) => budgetOrd(a) - budgetOrd(b));
     const est = sum(list, b => inclVat(b, b.geraamd)), real = sum(list, b => inclVat(b, b.werkelijk)), fixed = sum(list.filter(b => b.vastgelegd), b => inclVat(b, b.geraamd));
+    // Voorschot: het bedrag dat al effectief betaald is (zoals betaald, dus zonder btw-omrekening).
+    const paid = sum(list, b => b.voorschot);
     const vatSel = b => `<select class="cell btw" ${attrs("budget", b.id, "btw", 'aria-label="Btw"')}>${[["","incl."],["21","excl. 21%"],["12","excl. 12%"],["6","excl. 6%"]].map(([v,l]) => `<option value="${v}"${String(b.btw||"")===v?" selected":""}>${l}</option>`).join("")}</select>`;
     const rows = list.map(b => {
       const diff = b.werkelijk ? (Number(b.werkelijk)||0) - (Number(b.geraamd)||0) : null;
@@ -955,17 +957,18 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "werkelijk", 'data-t="money" aria-label="Werkelijk"')} value="${esc(moneyIn(b.werkelijk))}" placeholder="—"></td>
         <td class="w-vat">${vatSel(b)}${vatRate(b) ? `<small class="vat-incl">incl. ${eur2(postCost(b))}</small>` : ""}</td>
         <td class="num" style="color:${diff===null?"var(--muted)":diff>0?"var(--warn)":"var(--ok)"}">${diff===null?"—":(diff>0?"+":"")+eur2(diff)}</td>
+        <td class="w-money"><input class="cell num" inputmode="decimal" ${attrs("budget", b.id, "voorschot", 'data-t="money" aria-label="Voorschot betaald"')} value="${esc(moneyIn(Number(b.voorschot) || ""))}" placeholder="—">${Number(b.voorschot) ? `<small class="vat-incl" style="text-align:right">${postCost(b) - Number(b.voorschot) > 0.004 ? "nog " + eur2(postCost(b) - Number(b.voorschot)) : "volledig betaald"}</small>` : ""}</td>
         <td class="c"><input type="checkbox" ${attrs("budget", b.id, "vastgelegd", 'data-t="bool" aria-label="Vastgelegd"')}${b.vastgelegd?" checked":""}></td>
         <td class="c"><input type="checkbox" ${attrs("budget", b.id, "eigen", 'data-t="bool" aria-label="Enkel wij (ouders betalen niet mee)"')}${isOwn(b)?" checked":""}></td>
         <td><input class="cell" ${attrs("budget", b.id, "opmerking", 'aria-label="Opmerking"')} value="${esc(b.opmerking)}" placeholder="—"></td>
         <td class="num">${delBtn("budget", b.id)}</td></tr>`;
     }).join("");
     return `
-      <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)} <button class="btn ghost hide-btn" data-hide-budget title="Verberg alle bedragen, bv. als je de app aan iemand toont">Verberg budget</button></span></div>
+      <div class="panel-head"><h2>Budget</h2><span class="meta">Vastgelegd ${eur(fixed)} · nog open ${eur(est - fixed)}${paid ? ` · voorschotten betaald ${eur(paid)}` : ""} <button class="btn ghost hide-btn" data-hide-budget title="Verberg alle bedragen, bv. als je de app aan iemand toont">Verberg budget</button></span></div>
       ${list.length ? `<div class="scroll budget"><table>
-        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="c">Vastgelegd</th><th class="c" title="Aangevinkt: kost is sowieso voor jullie. Niet aangevinkt: ouders betalen per gast mee.">Enkel wij</th><th>Opmerking</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Post</th><th class="num">Geraamd</th><th class="num">Werkelijk</th><th>Btw</th><th class="num">Verschil</th><th class="num" title="Bedrag dat al betaald is als voorschot. Eronder: wat nog te betalen is (incl. btw).">Voorschot</th><th class="c">Vastgelegd</th><th class="c" title="Aangevinkt: kost is sowieso voor jullie. Niet aangevinkt: ouders betalen per gast mee.">Enkel wij</th><th>Opmerking</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr><td></td><td>Totaal incl. btw</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td></td><td></td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr><td></td><td>Totaal incl. btw</td><td class="num">${eur2(est)}</td><td class="num">${real ? eur2(real) : "—"}</td><td></td><td></td><td class="num">${paid ? eur2(paid) : "—"}</td><td></td><td></td><td colspan="2"></td></tr></tfoot>
         </table></div>${costCard()}` : `<div class="empty">Nog geen budgetposten. Voeg hierboven de eerste toe.</div>`}
       <form class="add" data-add="budget">
         <label class="grow">Post<input id="b-post" name="post" required placeholder="bv. Champagne"${dis()}></label>
@@ -2261,7 +2264,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       if(hid){ const n = renameHousehold(hid); toast(`${txt("voornaam")} toegevoegd onder ${gname(anchor)}, op de uitnodiging ${n}`); }
       else if(anchor) toast(`${txt("voornaam")} toegevoegd onder ${gname(anchor)}`);
       const box = form.querySelector(".g-samen"); if(box) box.hidden = true; }
-    if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, vastgelegd:false, eigen:false, opmerking:"" }); }
+    if(kind === "budget"){ if(!txt("post")) return; add("budget", { volgorde: Math.max(0, ...S.budget.map(budgetOrd).filter(n => n < 1e6)) + 1, post: txt("post"), geraamd: parseMoney(fd.get("geraamd")||0), werkelijk: 0, voorschot: 0, vastgelegd:false, eigen:false, opmerking:"" }); }
     if(kind === "orders"){ if(!txt("wat")) return;
       add("orders", { wat: txt("wat"), bij: txt("bij"), besteld_op: txt("besteld_op"), toegekomen: false, toegekomen_op: "", opmerking: "" });
       form.reset(); const d = form.querySelector('[name="besteld_op"]'); if(d) d.value = todayIso(); const w = form.querySelector('[name="wat"]'); if(w) w.focus(); return; }
